@@ -6,7 +6,7 @@ A GitHub Action that draws a contribution heatmap, a snake that eats it, and a 3
 
 [![CI](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml/badge.svg)](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/HowardZlh/github-action-shares?style=social)](https://github.com/HowardZlh/github-action-shares/stargazers)
+[![Star HowardZlh/github-action-shares on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](https://github.com/HowardZlh/github-action-shares)
 [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=HowardZlh.github-action-shares&left_text=visitors)](https://github.com/HowardZlh/github-action-shares)
 
 <picture>
@@ -33,22 +33,15 @@ Every SVG comes in a light and a dark version, so it matches whichever GitHub th
 
 The first three columns matter. GitHub only keeps a contribution calendar for user accounts, so the popular snake and 3D actions can't draw a repository or an organization. This one counts commits from `git log` (one repo) or sums `stats/commit_activity` across every public repo (an org) and draws from that.
 
-<table>
-<tr>
-<td width="50%">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap-dark.svg">
   <img alt="Commit heatmap of this repository over the last 53 weeks, cells popping in left to right" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap.svg">
 </picture>
-</td>
-<td width="50%">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline-dark.svg">
   <img alt="Isometric 3D skyline of daily commits with busiest day and longest streak" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline.svg">
 </picture>
-</td>
-</tr>
-</table>
 
 ## Quick start for a repository
 

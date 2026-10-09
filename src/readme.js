@@ -35,12 +35,16 @@ export function renderRepoTable(repos, { skip = [] } = {}) {
   const rows = sorted.map((r) => {
     const name = `[**${linkText(r.name)}**](${r.html_url})`;
     const home = r.homepage ? ` · [live ↗](${r.homepage})` : '';
-    const badge = `[![Stars of ${r.full_name}](https://img.shields.io/github/stars/${r.full_name}?style=social)](${r.html_url}/stargazers)`;
-    return `| ${name}${home} | ${cell(r.description)} | ${cell(r.language ?? '—')} | ${badge} |`;
+    // a live count reading "0" is negative social proof; below the threshold show a plain call to action
+    const badge =
+      r.stargazers_count >= MIN_STARS_FOR_TOTAL
+        ? `[![Stars of ${r.full_name}](https://img.shields.io/github/stars/${r.full_name}?style=social)](${r.html_url}/stargazers)`
+        : `[![Star ${r.full_name} on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](${r.html_url})`;
+    return `| ${name}${home} | ${cell(shorten(r.description ?? '', 90))} | ${cell(r.language ?? '—')} | ${badge} |`;
   });
   return [
     ...(total >= MIN_STARS_FOR_TOTAL ? [`<sub>⭐ ${total} stars across ${sorted.length} open-source projects</sub>`, ''] : []),
-    '| Project | What it does | Stack | Stars |',
+    '| Project | What it does | Stack | ⭐ |',
     '|:--|:--|:--|:--|',
     ...rows,
   ].join('\n');

@@ -7,7 +7,7 @@
 **Famous outages, told hop by hop.** *Every outage took a route.*
 
 [![Visit failrouter.com](https://img.shields.io/badge/visit-failrouter.com-d1242f)](https://failrouter.com)
-[![Stars](https://img.shields.io/github/stars/FailRouter/failrouter?style=social)](https://github.com/FailRouter/failrouter/stargazers)
+[![Star FailRouter/failrouter on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](https://github.com/FailRouter/failrouter)
 [![Visitors](https://komarev.com/ghpvc/?username=FailRouter&label=visitors&color=d1242f&style=flat)](https://github.com/FailRouter)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/FailRouter/failrouter/blob/main/LICENSE)
 
@@ -41,22 +41,15 @@ Then walk the [3D hall](https://failrouter.com/hall/), where every exhibit hangs
   <img alt="Snake eating the daily commit grid of all public FailRouter repositories" src="https://raw.githubusercontent.com/FailRouter/.github/output/snake.svg">
 </picture>
 
-<table>
-<tr>
-<td width="50%">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/heatmap-dark.svg">
   <img alt="Heatmap of commits across FailRouter repositories over the last 53 weeks" src="https://raw.githubusercontent.com/FailRouter/.github/output/heatmap.svg">
 </picture>
-</td>
-<td width="50%">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/skyline-dark.svg">
   <img alt="Isometric 3D skyline of FailRouter's daily commits" src="https://raw.githubusercontent.com/FailRouter/.github/output/skyline.svg">
 </picture>
-</td>
-</tr>
-</table>
 
 ## Recent activity
 

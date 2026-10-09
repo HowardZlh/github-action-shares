@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml/badge.svg)](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/HowardZlh/github-action-shares?style=social)](https://github.com/HowardZlh/github-action-shares/stargazers)
+[![Star HowardZlh/github-action-shares on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](https://github.com/HowardZlh/github-action-shares)
 [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=HowardZlh.github-action-shares&left_text=visitors)](https://github.com/HowardZlh/github-action-shares)
 
 <picture>
@@ -33,22 +33,15 @@
 
 关键在前三列。GitHub 只给个人账号记贡献日历，所以那两个最常用的贪吃蛇和 3D Action 画不了仓库，也画不了组织。本 Action 换了数据源：单个仓库读 `git log`，组织把所有公开仓库的 `stats/commit_activity` 加起来，再照同样的格子画。
 
-<table>
-<tr>
-<td width="50%">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap-dark.svg">
   <img alt="本仓库近 53 周的提交热力图，格子从左到右依次弹出" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap.svg">
 </picture>
-</td>
-<td width="50%">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline-dark.svg">
   <img alt="每日提交数的 3D 等距柱状图，标出最忙的一天和最长连续天数" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline.svg">
 </picture>
-</td>
-</tr>
-</table>
 
 ## 仓库三步接入
 

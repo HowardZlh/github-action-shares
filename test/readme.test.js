@@ -33,7 +33,9 @@ test('renderRepoTable sorts by stars and escapes pipes', () => {
   assert.match(renderRepoTable([repo('a', 7), repo('b', 5)]), /⭐ 12 stars across 2/);
   const filtered = renderRepoTable([repo('a', 1), repo('a', 1), repo('.github', 0), repo('skip', 3)], { skip: ['o/skip'] });
   assert.equal(filtered.split('\n').filter((l) => l.startsWith('| [**')).length, 1);
-  assert.match(out, /img\.shields\.io\/github\/stars\/o\/b\?style=social/);
+  assert.match(out, /Star-on_GitHub/); // 5 stars: no live count yet
+  assert.match(renderRepoTable([repo('big', 42)]), /img\.shields\.io\/github\/stars\/o\/big\?style=social/);
+  assert.ok(renderRepoTable([repo('long', 1, { description: 'word '.repeat(40) })]).includes('…'));
 });
 
 const ev = (type, payload, extra = {}) => ({ type, payload, repo: { name: 'o/r' }, actor: { login: 'fan' }, created_at: '2026-10-09T01:02:03Z', ...extra });

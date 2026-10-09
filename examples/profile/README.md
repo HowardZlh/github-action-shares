@@ -8,7 +8,6 @@ I build things that run in a browser tab or on Cloudflare Workers, and I open-so
 Right now that's a 3D universe you scroll through, a watchdog for Cloudflare bills, and a museum of outages.
 
 [![Profile views](https://komarev.com/ghpvc/?username=HowardZlh&label=profile%20views&color=4d9fff&style=flat)](https://github.com/HowardZlh)
-[![Followers](https://img.shields.io/github/followers/HowardZlh?label=followers&color=4d9fff)](https://github.com/HowardZlh?tab=followers)
 [![Website](https://img.shields.io/badge/web-guushu.com-1f2328)](https://www.guushu.com)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/howardzlh)
 
