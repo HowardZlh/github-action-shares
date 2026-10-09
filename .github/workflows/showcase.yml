@@ -1,0 +1,40 @@
+# Regenerates this repo's own heatmap / snake / 3D skyline and publishes them to
+# the `output` branch, which the README reads through raw.githubusercontent.com.
+name: Showcase
+
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: showcase
+  cancel-in-progress: true
+
+jobs:
+  art:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # full history, the heatmap reads `git log`
+      - uses: ./
+        with:
+          source: repo
+          git-path: .
+          label: commits
+          out-dir: dist
+      - uses: crazy-max/ghaction-github-pages@v5
+        with:
+          target_branch: output
+          build_dir: dist
+          keep_history: false
+          commit_message: "chore: refresh showcase art"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

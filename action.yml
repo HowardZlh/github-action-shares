@@ -1,0 +1,76 @@
+name: README Showcase Art
+description: Animated contribution heatmap, snake and 3D skyline SVGs for any repo, org or user, plus auto-updated stars and activity blocks. Zero dependencies.
+author: HowardZlh
+branding:
+  icon: activity
+  color: green
+
+inputs:
+  command:
+    description: "art = write SVGs to out-dir; readme = rewrite SHOWCASE:REPOS / SHOWCASE:ACTIVITY blocks in a README"
+    default: art
+  source:
+    description: "art only: repo, org or user"
+    default: repo
+  target:
+    description: "art only: owner/repo, org or user. Defaults to the current repository"
+    default: ""
+  git-path:
+    description: "art + source=repo: read commit dates from this local checkout (needs fetch-depth: 0) instead of the stats API"
+    default: ""
+  label:
+    description: "art only: noun shown in the SVGs, e.g. commits or contributions"
+    default: ""
+  out-dir:
+    description: "art only: output directory"
+    default: dist
+  readme:
+    description: "readme only: file to rewrite"
+    default: README.md
+  repos:
+    description: "readme only: comma separated owner/repo list for the REPOS table"
+    default: ""
+  org:
+    description: "readme only: add every public, non-fork repo of this org to the REPOS table"
+    default: ""
+  activity:
+    description: "readme only: users:<login> or orgs:<org> for the ACTIVITY list"
+    default: ""
+  limit:
+    description: "readme only: max lines in the ACTIVITY list"
+    default: "8"
+  skip-repos:
+    description: "readme only: comma separated owner/repo to leave out of ACTIVITY"
+    default: ""
+  token:
+    description: "Token for the GitHub API. user source needs it for GraphQL"
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run showcase ${{ inputs.command }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        IN_COMMAND: ${{ inputs.command }}
+        IN_SOURCE: ${{ inputs.source }}
+        IN_TARGET: ${{ inputs.target || github.repository }}
+        IN_GIT: ${{ inputs.git-path }}
+        IN_LABEL: ${{ inputs.label }}
+        IN_OUT: ${{ inputs.out-dir }}
+        IN_README: ${{ inputs.readme }}
+        IN_REPOS: ${{ inputs.repos }}
+        IN_ORG: ${{ inputs.org }}
+        IN_ACTIVITY: ${{ inputs.activity }}
+        IN_LIMIT: ${{ inputs.limit }}
+        IN_SKIP: ${{ inputs.skip-repos }}
+      run: |
+        set -euo pipefail
+        bin="$GITHUB_ACTION_PATH/bin/showcase.mjs"
+        if [ "$IN_COMMAND" = "art" ]; then
+          node "$bin" art --source "$IN_SOURCE" --target "$IN_TARGET" --git "$IN_GIT" --label "$IN_LABEL" --out "$IN_OUT"
+        else
+          node "$bin" readme --file "$IN_README" --repos "$IN_REPOS" --org "$IN_ORG" \
+            --activity "$IN_ACTIVITY" --limit "$IN_LIMIT" --skip-repos "$IN_SKIP"
+        fi

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Tests + coverage gate (lines 90%, branches 80%)
+        run: npm run coverage
+      - name: Run the action against this repo
+        uses: ./
+        with:
+          source: repo
+          git-path: .
+          out-dir: ci-dist
+      - name: Every SVG parses
+        run: |
+          sudo apt-get install -y -qq libxml2-utils >/dev/null
+          ls ci-dist
+          test "$(ls ci-dist/*.svg | wc -l)" -eq 6
+          xmllint --noout ci-dist/*.svg

@@ -1,0 +1,62 @@
+# Copy to <your-org>/.github/.github/workflows/org-showcase.yml
+# The org profile README lives at profile/README.md in the org's `.github` repo.
+#
+# Organisations have no contribution calendar, so Platane/snk and the 3D
+# contrib action can't draw one. This action sums commit_activity across the
+# org's public repos and draws the heatmap, snake and skyline from that.
+name: Org showcase
+
+on:
+  schedule:
+    - cron: "37 */12 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: org-showcase
+  cancel-in-progress: false
+
+jobs:
+  art:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: HowardZlh/github-action-shares@v1
+        with:
+          source: org
+          target: ${{ github.repository_owner }}
+          label: commits
+          out-dir: dist
+      - uses: crazy-max/ghaction-github-pages@v5
+        with:
+          target_branch: output
+          build_dir: dist
+          keep_history: false
+          commit_message: "chore: refresh org art"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  readme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: HowardZlh/github-action-shares@v1
+        with:
+          command: readme
+          readme: profile/README.md
+          org: ${{ github.repository_owner }}
+          activity: orgs:${{ github.repository_owner }}
+          skip-repos: ${{ github.repository }}
+          limit: 6
+      - name: Commit if anything changed
+        run: |
+          git diff --quiet && { echo "README unchanged"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: refresh org README"
+          git push

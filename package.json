@@ -1,0 +1,16 @@
+{
+  "name": "github-action-shares",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Animated contribution heatmap, snake and 3D skyline SVGs for any GitHub repo, org or user, plus auto-updated star and activity blocks for README files. Zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-lines=90 --test-coverage-branches=80 --test-coverage-include='src/**'",
+    "demo": "node bin/showcase.mjs art --source repo --target local --git . --out dist"
+  }
+}
