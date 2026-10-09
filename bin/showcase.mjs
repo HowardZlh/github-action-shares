@@ -25,9 +25,20 @@ export async function loadCounts({ source, target, git, client }) {
   }
   if (source === 'repo') return fromCommitActivity(await client.commitActivity(target));
   if (source === 'org') {
-    const repos = await client.ownerRepos(target, 'orgs');
+    // `.github` holds the org profile and bot commits, not project work
+    const repos = (await client.ownerRepos(target, 'orgs')).filter((r) => r.name !== '.github');
     const maps = [];
-    for (const r of repos) maps.push(fromCommitActivity(await client.commitActivity(r.full_name)));
+    const failed = [];
+    for (const r of repos) {
+      try {
+        maps.push(fromCommitActivity(await client.commitActivity(r.full_name)));
+      } catch (err) {
+        // one repo whose stats are still warming up shouldn't blank the whole chart
+        failed.push(r.full_name);
+        console.warn(`::warning::skipped ${r.full_name}: ${err.message}`);
+      }
+    }
+    if (repos.length > 0 && maps.length === 0) throw new Error(`no commit stats for any repo in ${target} (${failed.join(', ')})`);
     return mergeCounts(...maps);
   }
   if (source === 'user') return fromContributionCalendar(await client.contributionCalendar(target));

@@ -38,6 +38,24 @@ test('loadCounts routes repo / org / user to the right API', async () => {
   await assert.rejects(loadCounts({ source: 'team', client }), /--source must be/);
 });
 
+test('org mode skips .github, survives one cold repo, fails only when all do', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  const seen = [];
+  const client = {
+    ownerRepos: async () => [{ name: '.github', full_name: 'o/.github' }, { name: 'a', full_name: 'o/a' }, { name: 'b', full_name: 'o/b' }],
+    commitActivity: async (r) => {
+      seen.push(r);
+      if (r === 'o/b') throw new Error('still computing');
+      return [{ week: 0, days: [3, 0, 0, 0, 0, 0, 0] }];
+    },
+  };
+  assert.deepEqual([...(await loadCounts({ source: 'org', target: 'o', client }))], [['1970-01-01', 3]]);
+  assert.deepEqual(seen, ['o/a', 'o/b']);
+  assert.equal(console.warn.mock.callCount(), 1);
+  const cold = { ...client, commitActivity: async () => { throw new Error('still computing'); } };
+  await assert.rejects(loadCounts({ source: 'org', target: 'o', client: cold }), /no commit stats for any repo in o/);
+});
+
 test('CLI art end to end on a local repo', () => {
   const { dir } = gitRepo();
   const out = join(dir, 'dist');
