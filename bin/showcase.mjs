@@ -68,12 +68,12 @@ async function readme(opts, client) {
   if (hasBlock(md, 'REPOS')) {
     const repos = opts.org ? await client.ownerRepos(opts.org, 'orgs') : [];
     for (const full of list(opts.repos)) repos.push(await client.repo(full));
-    md = replaceBlock(md, 'REPOS', renderRepoTable(repos));
+    md = replaceBlock(md, 'REPOS', renderRepoTable(repos, { skip: list(opts['skip-repos']) }));
   }
   if (hasBlock(md, 'ACTIVITY')) {
     const [kind, name] = String(opts.activity).split(':');
     if (!name) throw new Error('--activity must look like users:<login> or orgs:<org>');
-    const events = await client.events(name, kind);
+    const events = await client.withPullTitles(await client.events(name, kind));
     md = replaceBlock(md, 'ACTIVITY', renderActivity(events, { limit: Number(opts.limit), stars: kind === 'orgs', skipRepos: list(opts['skip-repos']) }));
   }
   writeFileSync(opts.file, md);

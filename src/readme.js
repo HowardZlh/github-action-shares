@@ -14,9 +14,23 @@ export const hasBlock = (markdown, name) => markdown.includes(`SHOWCASE:${name}:
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
 const linkText = (s) => String(s).replace(/[[\]]/g, '');
 
+/** Long PR titles wrap a list row into three lines; cut at a word boundary. */
+export function shorten(s, max = 72) {
+  const t = linkText(s).trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > max / 2 ? cut.lastIndexOf(' ') : cut.length)}…`;
+}
+
+/** Below this, a "0 stars across 2 projects" line hurts more than it helps. */
+export const MIN_STARS_FOR_TOTAL = 10;
+
 /** Repos sorted by stars, with a live "Star" badge as the call to action. */
-export function renderRepoTable(repos) {
-  const sorted = [...repos].sort((a, b) => b.stargazers_count - a.stargazers_count || a.name.localeCompare(b.name));
+export function renderRepoTable(repos, { skip = [] } = {}) {
+  const seen = new Set();
+  const sorted = repos
+    .filter((r) => r.name !== '.github' && !skip.includes(r.full_name) && !seen.has(r.full_name) && seen.add(r.full_name))
+    .sort((a, b) => b.stargazers_count - a.stargazers_count || a.name.localeCompare(b.name));
   const total = sorted.reduce((s, r) => s + r.stargazers_count, 0);
   const rows = sorted.map((r) => {
     const name = `[**${linkText(r.name)}**](${r.html_url})`;
@@ -25,13 +39,14 @@ export function renderRepoTable(repos) {
     return `| ${name}${home} | ${cell(r.description)} | ${cell(r.language ?? '—')} | ${badge} |`;
   });
   return [
-    `<sub>⭐ ${total} stars across ${sorted.length} open-source projects</sub>`,
-    '',
+    ...(total >= MIN_STARS_FOR_TOTAL ? [`<sub>⭐ ${total} stars across ${sorted.length} open-source projects</sub>`, ''] : []),
     '| Project | What it does | Stack | Stars |',
     '|:--|:--|:--|:--|',
     ...rows,
   ].join('\n');
 }
+
+const DEFAULT_BRANCHES = new Set(['main', 'master', 'trunk']);
 
 const repoLink = (full) => `[${full.split('/')[1]}](https://github.com/${full})`;
 
@@ -47,7 +62,7 @@ export function describeEvent(e, { stars = false } = {}) {
     case 'PullRequestEvent': {
       const n = p.number ?? p.pull_request?.number;
       const url = p.pull_request?.html_url ?? `https://github.com/${repo}/pull/${n}`;
-      const title = p.pull_request?.title ? ` ${linkText(p.pull_request.title)}` : '';
+      const title = p.pull_request?.title ? ` ${shorten(p.pull_request.title)}` : '';
       const merged = p.action === 'merged' || (p.action === 'closed' && p.pull_request?.merged);
       if (merged) return at(`✅ Merged [#${n}${title}](${url}) in ${repoLink(repo)}`);
       if (p.action === 'opened') return at(`🔀 Opened [#${n}${title}](${url}) in ${repoLink(repo)}`);
@@ -56,7 +71,7 @@ export function describeEvent(e, { stars = false } = {}) {
     case 'IssuesEvent': {
       const i = p.issue ?? {};
       const url = i.html_url ?? `https://github.com/${repo}/issues/${i.number}`;
-      const title = i.title ? ` ${linkText(i.title)}` : '';
+      const title = i.title ? ` ${shorten(i.title)}` : '';
       if (p.action === 'opened') return at(`🐛 Opened issue [#${i.number}${title}](${url}) in ${repoLink(repo)}`);
       if (p.action === 'closed') return at(`☑️ Closed issue [#${i.number}${title}](${url}) in ${repoLink(repo)}`);
       return null;
@@ -66,8 +81,9 @@ export function describeEvent(e, { stars = false } = {}) {
       if (p.ref_type === 'tag') return at(`🏷️ Tagged \`${p.ref}\` in ${repoLink(repo)}`);
       return null;
     case 'PushEvent': {
+      // feature-branch pushes are noise next to the merge that follows them
       const branch = String(p.ref ?? '').replace('refs/heads/', '');
-      return at(`⬆️ Pushed to \`${branch}\` in ${repoLink(repo)}`);
+      return DEFAULT_BRANCHES.has(branch) ? at(`⬆️ Pushed to \`${branch}\` in ${repoLink(repo)}`) : null;
     }
     case 'WatchEvent':
       return stars ? at(`⭐ [${e.actor.login}](https://github.com/${e.actor.login}) starred ${repoLink(repo)}`) : null;
@@ -78,13 +94,21 @@ export function describeEvent(e, { stars = false } = {}) {
   }
 }
 
-/** Newest first; consecutive identical lines (e.g. ten pushes on one day) collapse. */
+const prKey = (e) => `${e.repo?.name}#${e.payload?.number ?? e.payload?.pull_request?.number}`;
+const isMerge = (e) => e.type === 'PullRequestEvent' && (e.payload?.action === 'merged' || (e.payload?.action === 'closed' && e.payload?.pull_request?.merged));
+
+/**
+ * Newest first. Identical lines (ten pushes to main on one day) collapse into
+ * one, and a PR that was merged doesn't also show up as "opened".
+ */
 export function renderActivity(events, { limit = 8, stars = false, skipRepos = [] } = {}) {
+  const merged = new Set(events.filter(isMerge).map(prKey));
   const lines = [];
   for (const e of events) {
     if (skipRepos.includes(e.repo?.name)) continue;
+    if (e.type === 'PullRequestEvent' && e.payload?.action === 'opened' && merged.has(prKey(e))) continue;
     const line = describeEvent(e, { stars });
-    if (!line || lines.at(-1) === line) continue;
+    if (!line || lines.includes(line)) continue;
     lines.push(line);
     if (lines.length >= limit) break;
   }

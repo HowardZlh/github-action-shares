@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { describeEvent, hasBlock, renderActivity, renderRepoTable, replaceBlock } from '../src/readme.js';
+import { describeEvent, hasBlock, renderActivity, renderRepoTable, replaceBlock, shorten } from '../src/readme.js';
+
+test('shorten cuts long titles at a word boundary', () => {
+  assert.equal(shorten('short [one]'), 'short one');
+  const long = 'feat: Bing/Google SEO — BingSiteAuth + IndexNow push, home/breadcrumb JSON-LD, root 404';
+  const out = shorten(long);
+  assert.ok(out.length <= 72 && out.endsWith('…') && !out.includes('  '));
+  assert.equal(shorten('x'.repeat(100)).length, 72);
+});
 
 const md = 'top\n<!-- SHOWCASE:REPOS:START -->\nold\n<!-- SHOWCASE:REPOS:END -->\nbottom';
 
@@ -21,7 +29,10 @@ test('renderRepoTable sorts by stars and escapes pipes', () => {
   assert.match(rows[0], /\*\*b\*\*.*live ↗/);
   assert.match(rows[0], /\| — \|/);
   assert.match(rows[1], /desc \\\| a/);
-  assert.match(out, /⭐ 6 stars across 2/);
+  assert.doesNotMatch(out, /stars across/); // 6 < MIN_STARS_FOR_TOTAL
+  assert.match(renderRepoTable([repo('a', 7), repo('b', 5)]), /⭐ 12 stars across 2/);
+  const filtered = renderRepoTable([repo('a', 1), repo('a', 1), repo('.github', 0), repo('skip', 3)], { skip: ['o/skip'] });
+  assert.equal(filtered.split('\n').filter((l) => l.startsWith('| [**')).length, 1);
   assert.match(out, /img\.shields\.io\/github\/stars\/o\/b\?style=social/);
 });
 
@@ -41,6 +52,7 @@ test('describeEvent covers the useful event types', () => {
   assert.match(describeEvent(ev('CreateEvent', { ref_type: 'tag', ref: 'v2' })), /🏷️ Tagged `v2`/);
   assert.equal(describeEvent(ev('CreateEvent', { ref_type: 'branch' })), null);
   assert.match(describeEvent(ev('PushEvent', { ref: 'refs/heads/main' })), /⬆️ Pushed to `main` in \[r\]\(https:\/\/github.com\/o\/r\) · <sub>2026-10-09<\/sub>/);
+  assert.equal(describeEvent(ev('PushEvent', { ref: 'refs/heads/feat/x' })), null);
   assert.equal(describeEvent(ev('WatchEvent', {})), null);
   assert.match(describeEvent(ev('WatchEvent', {}), { stars: true }), /⭐ \[fan\]/);
   assert.match(describeEvent(ev('ForkEvent', {}), { stars: true }), /🍴 \[fan\]/);
@@ -50,10 +62,18 @@ test('describeEvent covers the useful event types', () => {
 
 test('renderActivity collapses repeats, skips repos and respects the limit', () => {
   const push = ev('PushEvent', { ref: 'refs/heads/main' });
-  const events = [push, push, push, ev('CreateEvent', { ref_type: 'repository' }), ev('PushEvent', { ref: 'x' }, { repo: { name: 'o/skip' } })];
-  assert.equal(renderActivity(events).split('\n').length, 3);
+  const created = ev('CreateEvent', { ref_type: 'repository' });
+  const events = [push, created, push, push, ev('PushEvent', { ref: 'main' }, { repo: { name: 'o/skip' } })];
+  assert.equal(renderActivity(events).split('\n').length, 3); // non-adjacent repeats collapse too
   assert.equal(renderActivity(events, { skipRepos: ['o/skip'] }).split('\n').length, 2);
   assert.match(renderActivity(events), /^1\. ⬆️/);
   assert.equal(renderActivity(events, { limit: 1 }).split('\n').length, 1);
-  assert.equal(renderActivity([ev('PushEvent', { ref: 'x' }, { repo: { name: 'o/skip' } })], { skipRepos: ['o/skip'] }), '_Nothing public in the last 90 days._');
+  assert.equal(renderActivity([ev('PushEvent', { ref: 'main' }, { repo: { name: 'o/skip' } })], { skipRepos: ['o/skip'] }), '_Nothing public in the last 90 days._');
+});
+
+test('renderActivity hides "opened" for a PR that was merged', () => {
+  const out = renderActivity([ev('PullRequestEvent', { action: 'merged', number: 9 }), ev('PullRequestEvent', { action: 'opened', number: 9 }), ev('PullRequestEvent', { action: 'opened', number: 10 })]);
+  assert.match(out, /Merged \[#9\]/);
+  assert.doesNotMatch(out, /Opened \[#9\]/);
+  assert.match(out, /Opened \[#10\]/);
 });

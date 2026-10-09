@@ -50,6 +50,30 @@ export function createClient({ token = '', fetchImpl = globalThis.fetch, wait = 
       return body.data.user.contributionsCollection.contributionCalendar;
     },
 
+    async pull(fullName, number) {
+      return (await request(`/repos/${fullName}/pulls/${number}`)).body;
+    },
+
+    /**
+     * Since 2025 the Events API ships PR events without title / html_url.
+     * Fill them in for the first `max` PR events, the only ones a README shows.
+     */
+    async withPullTitles(events, { max = 12 } = {}) {
+      let budget = max;
+      for (const e of events) {
+        const p = e.payload;
+        if (e.type !== 'PullRequestEvent' || p?.pull_request?.title || budget <= 0) continue;
+        budget -= 1;
+        const n = p.number ?? p.pull_request?.number;
+        try {
+          p.pull_request = { ...p.pull_request, ...(await this.pull(e.repo.name, n)) };
+        } catch {
+          // deleted repo or PR: keep the bare "#n" line
+        }
+      }
+      return events;
+    },
+
     async events(name, kind = 'users') {
       const path = kind === 'orgs' ? `/orgs/${name}/events?per_page=100` : `/users/${name}/events/public?per_page=100`;
       return (await request(path)).body ?? [];

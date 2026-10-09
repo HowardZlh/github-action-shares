@@ -59,6 +59,23 @@ test('contributionCalendar needs a token and surfaces GraphQL errors', async () 
   await assert.rejects(c.contributionCalendar('u'), /GraphQL: nope/);
 });
 
+test('withPullTitles fills missing PR titles within a budget and tolerates 404', async () => {
+  const f = fake([[200, { title: 'Add hall', html_url: 'https://x/9' }], [404, { message: 'Not Found' }]]);
+  const c = createClient({ fetchImpl: f.fetchImpl });
+  const events = [
+    { type: 'PullRequestEvent', repo: { name: 'o/r' }, payload: { action: 'merged', number: 9 } },
+    { type: 'PullRequestEvent', repo: { name: 'o/r' }, payload: { action: 'opened', pull_request: { number: 8 } } },
+    { type: 'PullRequestEvent', repo: { name: 'o/r' }, payload: { action: 'opened', pull_request: { number: 7, title: 'has one' } } },
+    { type: 'PullRequestEvent', repo: { name: 'o/r' }, payload: { action: 'opened', number: 6 } },
+    { type: 'PushEvent', repo: { name: 'o/r' }, payload: {} },
+  ];
+  await c.withPullTitles(events, { max: 2 });
+  assert.equal(events[0].payload.pull_request.title, 'Add hall');
+  assert.equal(events[1].payload.pull_request.title, undefined); // 404 kept bare
+  assert.equal(events[3].payload.pull_request, undefined); // over budget
+  assert.deepEqual(f.calls.map((x) => x.url), ['https://api.github.com/repos/o/r/pulls/9', 'https://api.github.com/repos/o/r/pulls/8']);
+});
+
 test('events picks the user or org endpoint', async () => {
   const f = fake([[200, [{ id: 1 }]], [200, null]]);
   const c = createClient({ fetchImpl: f.fetchImpl });
