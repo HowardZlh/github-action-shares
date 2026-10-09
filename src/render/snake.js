@@ -3,22 +3,74 @@ import { escapeXml, fmt, svgDoc, theme } from './theme.js';
 const CELL = 11;
 const GAP = 3;
 const PITCH = CELL + GAP;
-const STEP_S = 0.055; // seconds per cell
 const LENGTH = 5; // snake segments
+const BASE_STEP_S = 0.1; // seconds per cell
+const MIN_LOOP_S = 8; // sparse grids shouldn't flash by
+const MAX_LOOP_S = 30; // dense grids shouldn't drag on
+const PAUSE_S = 1.5; // offscreen rest before the next loop
+
+const dist = (a, b) => Math.abs(a.week - b.week) + Math.abs(a.weekday - b.weekday);
+
+/** One-cell steps from `from` to `to`: horizontal first, then vertical. Excludes `from`. */
+export function walk(from, to) {
+  const steps = [];
+  let { week, weekday } = from;
+  while (week !== to.week) {
+    week += Math.sign(to.week - week);
+    steps.push({ week, weekday });
+  }
+  while (weekday !== to.weekday) {
+    weekday += Math.sign(to.weekday - weekday);
+    steps.push({ week, weekday });
+  }
+  return steps;
+}
 
 /**
- * Serpentine walk: down column 0, up column 1, down column 2 ... Every move is
- * exactly one pitch, so `animateMotion values` with linear timing gives each
- * cell the same time slot and we can schedule "eaten" colour swaps exactly.
+ * Greedy nearest-target route, like Platane/snk on a profile: enter from the
+ * top-left, always head for the closest uneaten square (ties: leftmost, then
+ * topmost), leave through the nearer side. Every step moves exactly one cell,
+ * so a step index is also a time slot.
+ * Returns { points, eatenAt: Map<cell, stepIndex> }.
  */
-export function serpentine(grid) {
-  const path = [];
-  grid.weeks.forEach((week, w) => {
-    // the current week is partial; pad future days so every move stays one pitch
-    const full = Array.from({ length: 7 }, (_, d) => week[d] ?? { week: w, weekday: d, level: 0, count: 0, virtual: true });
-    for (const c of w % 2 === 0 ? full : full.reverse()) path.push(c);
-  });
-  return path;
+export function planRoute(grid) {
+  const cols = grid.weeks.length;
+  const targets = grid.cells.filter((c) => c.count > 0);
+  const start = { week: -2, weekday: 0 };
+  const points = [start];
+  const eatenAt = new Map();
+  let head = start;
+
+  if (targets.length === 0) {
+    // nothing to eat: cross the middle row once
+    points.push(...walk(head, { week: -2, weekday: 3 }), ...walk({ week: -2, weekday: 3 }, { week: cols + LENGTH + 1, weekday: 3 }));
+    return { points, eatenAt };
+  }
+
+  const left = new Set(targets);
+  while (left.size > 0) {
+    let best = null;
+    for (const c of left) {
+      const d = dist(head, c);
+      if (!best || d < best.d || (d === best.d && (c.week < best.c.week || (c.week === best.c.week && c.weekday < best.c.weekday)))) best = { c, d };
+    }
+    points.push(...walk(head, best.c));
+    eatenAt.set(best.c, points.length - 1);
+    left.delete(best.c);
+    head = best.c;
+  }
+
+  const exit = head.week < cols / 2 ? { week: -LENGTH - 2, weekday: head.weekday } : { week: cols + LENGTH + 1, weekday: head.weekday };
+  points.push(...walk(head, exit));
+  return { points, eatenAt };
+}
+
+/** Seconds per step, so the moving part of the loop lands inside [MIN, MAX]. */
+export function stepSeconds(moves) {
+  const s = moves * BASE_STEP_S;
+  if (s < MIN_LOOP_S) return MIN_LOOP_S / moves;
+  if (s > MAX_LOOP_S) return MAX_LOOP_S / moves;
+  return BASE_STEP_S;
 }
 
 export function renderSnake(grid, { theme: themeName = 'light', label = 'contributions' } = {}) {
@@ -29,30 +81,30 @@ export function renderSnake(grid, { theme: themeName = 'light', label = 'contrib
   const width = left + cols * PITCH + 6;
   const height = top + 7 * PITCH + 8;
 
-  const path = serpentine(grid);
-  const point = (c) => [left + c.week * PITCH, top + c.weekday * PITCH];
-  const points = path.map(point);
-  // leave through the right edge (clipped by the viewBox) before the loop restarts
-  const [lx, ly] = points.at(-1);
-  for (let i = 1; i <= LENGTH + 6; i += 1) points.push([lx + i * PITCH, ly]);
-
+  const route = planRoute(grid);
+  const moves = route.points.length - 1;
+  const stepS = stepSeconds(moves);
+  // rest offscreen: repeat the exit point so the tail follows the head out
+  const pause = Math.max(LENGTH + 1, Math.ceil(PAUSE_S / stepS));
+  const points = [...route.points, ...Array(pause).fill(route.points.at(-1))];
   const steps = points.length - 1;
-  const dur = +(steps * STEP_S).toFixed(3);
-  const values = points.map(([x, y]) => `${x},${y}`).join(';');
+  const dur = +(steps * stepS).toFixed(3);
+  const xy = (p) => [left + p.week * PITCH, top + p.weekday * PITCH];
+  const values = points.map((p) => xy(p).join(',')).join(';');
 
-  const cells = path.map((c, i) => {
-    const [x, y] = point(c);
+  const cells = grid.cells.map((c) => {
+    const [x, y] = xy(c);
     const base = `x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2"`;
-    if (c.virtual) return '';
-    if (c.level === 0) return `<rect ${base} fill="${t.levels[0]}"/>`;
-    const at = Math.max(i / steps, 0.0001).toFixed(5);
-    return `<rect ${base} fill="${t.levels[c.level]}"><animate attributeName="fill" calcMode="discrete" values="${t.levels[c.level]};${t.levels[0]}" keyTimes="0;${at}" dur="${dur}s" repeatCount="indefinite"/></rect>`;
+    const at = route.eatenAt.get(c);
+    if (at === undefined) return `<rect ${base} fill="${t.levels[c.level]}"/>`;
+    return `<rect ${base} fill="${t.levels[c.level]}"><animate attributeName="fill" calcMode="discrete" values="${t.levels[c.level]};${t.levels[0]}" keyTimes="0;${(at / steps).toFixed(5)}" dur="${dur}s" repeatCount="indefinite"/></rect>`;
   });
 
   const segments = Array.from({ length: LENGTH }, (_, k) => {
     const size = CELL - k * 1.2;
     const inset = (CELL - size) / 2;
-    const begin = k === 0 ? '0s' : `-${(dur - k * STEP_S).toFixed(3)}s`;
+    // segment k trails the head by k steps: start it k steps from the loop end
+    const begin = k === 0 ? '0s' : `-${(dur - k * stepS).toFixed(3)}s`;
     return `<rect x="${inset}" y="${inset}" width="${size}" height="${size}" rx="${size / 2.6}" fill="${t.snake}" opacity="${(1 - k * 0.13).toFixed(2)}"><animateMotion values="${values}" dur="${dur}s" begin="${begin}" repeatCount="indefinite" calcMode="linear"/></rect>`;
   }).reverse(); // head drawn last, on top
 
@@ -61,11 +113,7 @@ export function renderSnake(grid, { theme: themeName = 'light', label = 'contrib
     width,
     height,
     title: headline,
-    desc: `Animated snake walking the ${label} grid from ${grid.start} to ${grid.end}.`,
-    body: [
-      `<text x="${left}" y="20" font-size="13" font-weight="600" fill="${t.text}">${escapeXml(headline)}</text>`,
-      ...cells.filter(Boolean),
-      ...segments,
-    ].join('\n'),
+    desc: `Animated snake heading for the nearest active day on the ${label} grid from ${grid.start} to ${grid.end}.`,
+    body: [`<text x="${left}" y="20" font-size="13" font-weight="600" fill="${t.text}">${escapeXml(headline)}</text>`, ...cells, ...segments].join('\n'),
   });
 }

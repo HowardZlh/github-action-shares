@@ -64,7 +64,7 @@ When the run is green, an `output` branch exists and the README images load. raw
 
 ## Part 2: the metrics token
 
-The [lowlighter/metrics](https://github.com/lowlighter/metrics) card (languages, achievements) needs a personal access token, because the default `GITHUB_TOKEN` can only see the repository it runs in. The workflow skips the card when the secret is missing, so this part is optional.
+The [lowlighter/metrics](https://github.com/lowlighter/metrics) languages card needs a personal access token, because the default `GITHUB_TOKEN` can only see the repository it runs in. The workflow skips the card when the secret is missing, so this part is optional.
 
 1. Open [GitHub's new-token page](https://github.com/settings/tokens/new?scopes=read:user,read:org&description=METRICS_TOKEN). The link pre-fills a classic token with only `read:user` and `read:org`.
 2. Pick an expiry (90 days is a reasonable default, and GitHub emails you before it lapses) and generate it.
@@ -75,7 +75,9 @@ pbpaste | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN   # macOS
 # Linux: xclip -o -selection clipboard | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN
 ```
 
-The card is committed to `metrics/metrics.svg` on the default branch, so reference it with a relative path: `![Languages and achievements](metrics/metrics.svg)`.
+The card is committed to `metrics/metrics.svg` on the default branch, so reference it with a relative path: `![Languages](metrics/metrics.svg)`.
+
+Leave `plugin_achievements` off. In v3.34 it still queries classic Projects, which GitHub has removed, and the card renders "Unexpected error" under Achievements.
 
 ## Part 3: an organization profile
 

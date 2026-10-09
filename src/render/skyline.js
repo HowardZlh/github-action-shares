@@ -18,8 +18,11 @@ export function barHeight(count, max) {
 export function renderSkyline(grid, { theme: themeName = 'light', label = 'contributions' } = {}) {
   const t = theme(themeName);
   const ox = 8 * A + 12;
-  const oy = MAX_H + 64;
   const cols = grid.weeks.length;
+  // crop to content: the floor starts just under the title unless a bar near the
+  // back corner is tall enough to need the room (sparse grids used to waste ~50px)
+  const highest = Math.min(0, ...grid.cells.map((c) => (c.week + c.weekday) * B - barHeight(c.count, grid.max)));
+  const oy = Math.ceil(58 - highest);
   const width = Math.ceil(ox + cols * A + 16);
   const height = Math.ceil(oy + (cols + 7) * B + 12);
   const a = A * FILL;
@@ -42,7 +45,7 @@ export function renderSkyline(grid, { theme: themeName = 'light', label = 'contr
   const headline = `${fmt(grid.total)} ${label} · 3D`;
   const lines = [
     grid.busiest ? `Busiest day ${grid.busiest.date} (${fmt(grid.busiest.count)})` : 'No activity yet',
-    `Longest streak ${grid.longest} days`,
+    `Longest streak ${grid.longest} ${grid.longest === 1 ? 'day' : 'days'}`,
     `Active on ${fmt(grid.activeDays)} of ${fmt(grid.cells.length)} days`,
   ];
   const statsY = height - 12 - (lines.length - 1) * 16;

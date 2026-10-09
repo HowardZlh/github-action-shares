@@ -25,11 +25,11 @@
 | 产物 | 仓库 | 组织 | 个人 | 来源 |
 |:--|:-:|:-:|:-:|:--|
 | 按周逐列浮现的贡献热力图 | 支持 | 支持 | 支持 | 本 Action |
-| 吃格子的贪吃蛇 | 支持 | 支持 | 支持 | 本 Action（个人也可用 [Platane/snk](https://github.com/Platane/snk)） |
+| 直奔最近一格的贪吃蛇 | 支持 | 支持 | 支持 | 本 Action（个人也可用 [Platane/snk](https://github.com/Platane/snk)） |
 | 3D 等距柱状图，附最忙的一天、最长连续天数 | 支持 | 支持 | 支持 | 本 Action（个人也可用 [github-profile-3d-contrib](https://github.com/yoshi389111/github-profile-3d-contrib)） |
 | 按星数排序的项目表，每行一个实时 Star 按钮 | — | 支持 | 支持 | 本 Action，`command: readme` |
 | 最近动态：发版、合并的 PR、新仓库；组织还会显示谁点了星 | — | 支持 | 支持 | 本 Action，`command: readme` |
-| 语言占比、成就卡片 | — | — | 支持 | [lowlighter/metrics](https://github.com/lowlighter/metrics) |
+| 语言占比卡片 | — | — | 支持 | [lowlighter/metrics](https://github.com/lowlighter/metrics) |
 
 关键在前三列。GitHub 只给个人账号记贡献日历，所以那两个最常用的贪吃蛇和 3D Action 画不了仓库，也画不了组织。本 Action 换了数据源：单个仓库读 `git log`，组织把所有公开仓库的 `stats/commit_activity` 加起来，再照同样的格子画。
 
@@ -123,7 +123,8 @@ jobs:
 ## 实现方式
 
 - **零依赖。**只用 Node 自带的 `fetch`、`node:test` 和字符串模板。`action.yml` 是 composite action，直接跑 `node bin/showcase.mjs`，没有 `node_modules` 要审计，也没有 Docker 镜像要拉。
-- **动画不靠 JavaScript。**README 里的图片经 GitHub 的 camo 代理以 `<img>` 加载，脚本根本不会执行。热力图和 3D 图用 CSS 关键帧；贪吃蛇用 SMIL 的 `<animateMotion>`，每个非空格子配一个 `<animate>`，时间点精确对上蛇头到达的那一刻。
+- **动画不靠 JavaScript。**README 里的图片经 GitHub 的 camo 代理以 `<img>` 加载，脚本根本不会执行。热力图和 3D 图用 CSS 关键帧，贪吃蛇用 SMIL 的 `<animateMotion>`。
+- **贪吃蛇只走必要的路。**从左上角进场，每次直奔离蛇头最近、还没吃掉的格子，每步走一格，吃完从近的一侧离场。被吃的格子各配一个 `<animate>`，时间点对上蛇头到达的那一步。不管一年的提交多稀疏或多密集，一圈都在 8 到 30 秒之间。
 - **照顾「减少动态效果」设置。**系统开了 `prefers-reduced-motion: reduce`，CSS 动画就关掉，直接显示最后一帧。
 - **读屏软件和搜索引擎都读得到。**每张 SVG 带 `role="img"`；`<title>` 里写的是真实数字，比如「569 contributions in the last year」；`<desc>` 写日期范围。每个格子悬停能看到日期和次数。
 - **按四分位数分配颜色**，和 GitHub 自己的算法一样。我自己的日历里有一天 68 次贡献，如果按最大值等分，全年其余格子都会褪成最浅的绿。

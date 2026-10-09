@@ -66,7 +66,7 @@ gh run watch --repo YOUR_LOGIN/YOUR_LOGIN
 
 ## 二、metrics 令牌
 
-[lowlighter/metrics](https://github.com/lowlighter/metrics) 那张语言占比、成就卡片需要个人访问令牌（PAT）：默认的 `GITHUB_TOKEN` 只看得见当前仓库，看不到你名下的其他仓库。没配这个 secret，工作流会跳过这张卡片，其他图照常生成，所以这一步可做可不做。
+[lowlighter/metrics](https://github.com/lowlighter/metrics) 那张语言占比卡片需要个人访问令牌（PAT）：默认的 `GITHUB_TOKEN` 只看得见当前仓库，看不到你名下的其他仓库。没配这个 secret，工作流会跳过这张卡片，其他图照常生成，所以这一步可做可不做。
 
 先打开 [GitHub 的令牌创建页](https://github.com/settings/tokens/new?scopes=read:user,read:org&description=METRICS_TOKEN)，链接已经预选好 `read:user` 和 `read:org` 两个只读权限。过期时间选 90 天就够，快到期时 GitHub 会发邮件提醒。
 
@@ -77,7 +77,9 @@ pbpaste | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN   # macOS
 # Linux：xclip -o -selection clipboard | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN
 ```
 
-卡片会提交到默认分支的 `metrics/metrics.svg`，README 里用相对路径引用：`![语言占比与成就](metrics/metrics.svg)`。
+卡片会提交到默认分支的 `metrics/metrics.svg`，README 里用相对路径引用：`![语言占比](metrics/metrics.svg)`。
+
+`plugin_achievements` 不要开。v3.34 的成就插件还在查询经典版 Projects，GitHub 已经下线了这个接口，卡片的 Achievements 一栏会显示「Unexpected error」。
 
 ## 三、组织主页
 

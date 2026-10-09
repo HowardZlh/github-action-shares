@@ -25,11 +25,11 @@ Every SVG comes in a light and a dark version, so it matches whichever GitHub th
 | Output | Repo | Org | User | Made by |
 |:--|:-:|:-:|:-:|:--|
 | Heatmap that fills in week by week | ✅ | ✅ | ✅ | this action |
-| Snake eating the grid | ✅ | ✅ | ✅ | this action (users can also use [Platane/snk](https://github.com/Platane/snk)) |
+| Snake heading straight for the nearest active day | ✅ | ✅ | ✅ | this action (users can also use [Platane/snk](https://github.com/Platane/snk)) |
 | 3D isometric skyline with busiest day and longest streak | ✅ | ✅ | ✅ | this action (users can also use [github-profile-3d-contrib](https://github.com/yoshi389111/github-profile-3d-contrib)) |
 | Project table sorted by stars, with a live Star button per row | — | ✅ | ✅ | this action, `command: readme` |
 | Recent activity: releases, merged PRs, new repos, and for orgs who starred what | — | ✅ | ✅ | this action, `command: readme` |
-| Metrics card: languages, achievements | — | — | ✅ | [lowlighter/metrics](https://github.com/lowlighter/metrics) |
+| Metrics card: languages | — | — | ✅ | [lowlighter/metrics](https://github.com/lowlighter/metrics) |
 
 The first three columns matter. GitHub only keeps a contribution calendar for user accounts, so the popular snake and 3D actions can't draw a repository or an organization. This one counts commits from `git log` (one repo) or sums `stats/commit_activity` across every public repo (an org) and draws from that.
 
@@ -123,7 +123,8 @@ Running live: [github.com/FailRouter](https://github.com/FailRouter).
 ## How it works
 
 - **Zero dependencies.** Node's built-in `fetch`, `node:test` and string templates. `action.yml` is a composite action that runs `node bin/showcase.mjs`, so there's no `node_modules` to audit or Docker image to pull.
-- **Animation without JavaScript.** GitHub serves README images through its camo proxy as `<img>`, where scripts never run. The heatmap and skyline use CSS keyframes. The snake uses SMIL `<animateMotion>`, with one `<animate>` per non-empty cell, timed to the moment the head reaches it.
+- **Animation without JavaScript.** GitHub serves README images through its camo proxy as `<img>`, where scripts never run. The heatmap and skyline use CSS keyframes, and the snake uses SMIL `<animateMotion>`.
+- **The snake only walks where it has to.** It enters from the top-left, always heads for the nearest uneaten square (one cell per step), and leaves through the nearer side; each eaten cell gets one `<animate>` timed to the step the head arrives. A loop lasts 8 to 30 seconds however sparse or busy the year was.
 - **Reduced motion is respected.** The CSS animations switch off under `prefers-reduced-motion: reduce`, and the SVG shows the final frame.
 - **Readable by screen readers and search engines.** Each SVG has `role="img"`, a `<title>` with the real number ("569 contributions in the last year") and a `<desc>` with the date range. Each cell carries a tooltip with its date and count.
 - **Quartile colouring**, the way GitHub does it: one 68-contribution day doesn't wash the rest of the year out to the palest green.

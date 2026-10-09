@@ -56,7 +56,7 @@ One scroll wheel, four zoom levels: Earth, the Solar System on real Keplerian or
   <img alt="Isometric skyline of Howard's daily contributions with busiest day and longest streak" src="https://raw.githubusercontent.com/HowardZlh/HowardZlh/output/art/skyline.svg">
 </picture>
 
-<img alt="Languages Howard writes in and GitHub achievements" src="metrics/metrics.svg">
+<img alt="Languages Howard writes in, by share of code across public repositories" src="metrics/metrics.svg">
 
 </details>
 
