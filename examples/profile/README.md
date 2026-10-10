@@ -7,7 +7,7 @@
 I build things that run in a browser tab or on Cloudflare Workers, and I open-source all of them.<br>
 Right now that's a 3D universe you scroll through, a watchdog for Cloudflare bills, and a museum of outages.
 
-[![Profile views](https://komarev.com/ghpvc/?username=HowardZlh&label=profile%20views&color=4d9fff&style=flat)](https://github.com/HowardZlh)
+[![Profile views](https://visitor-badge.laobi.icu/badge?page_id=HowardZlh.profile&left_text=profile%20views&left_color=%23555&right_color=%234d9fff)](https://github.com/HowardZlh)
 [![Website](https://img.shields.io/badge/web-guushu.com-1f2328)](https://www.guushu.com)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/howardzlh)
 

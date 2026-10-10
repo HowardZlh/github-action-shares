@@ -8,7 +8,7 @@
 
 [![Visit failrouter.com](https://img.shields.io/badge/visit-failrouter.com-d1242f)](https://failrouter.com)
 [![Star FailRouter/failrouter on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](https://github.com/FailRouter/failrouter)
-[![Visitors](https://komarev.com/ghpvc/?username=FailRouter&label=visitors&color=d1242f&style=flat)](https://github.com/FailRouter)
+[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=FailRouter.profile&left_text=visitors&left_color=%23555&right_color=%23d1242f)](https://github.com/FailRouter)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/FailRouter/failrouter/blob/main/LICENSE)
 
 <sub>中文：一座著名故障博物馆，每次宕机都按它走过的路线讲。中文版：<a href="https://failrouter.com/zh/">failrouter.com/zh</a></sub>

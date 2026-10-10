@@ -10,11 +10,13 @@ This guide wires up the three setups running on [github.com/HowardZlh](https://g
 
 | Where | Snake | Heatmap | 3D | Stars table | Activity | Visitors |
 |:--|:--|:--|:--|:--|:--|:--|
-| Profile (`login/login`) | Platane/snk | this action, `source: user` | github-profile-3d-contrib | `repos:` list | `users:login` | komarev |
-| Org (`org/.github`) | this action, `source: org` | same | same | `org:` | `orgs:org` | komarev |
+| Profile (`login/login`) | Platane/snk | this action, `source: user` | github-profile-3d-contrib | `repos:` list | `users:login` | visitor-badge |
+| Org (`org/.github`) | this action, `source: org` | same | same | `org:` | `orgs:org` | visitor-badge |
 | Repo | this action, `source: repo` | same | same | — | — | visitor-badge |
 
 Everything except the visitor counters is generated inside your own Actions run and stored in your own repo. The visitor counters are hosted services and they count image loads, not people. Treat the number as a trend.
+
+Check that a badge service actually renders on github.com before you rely on it. README images go through GitHub's camo proxy, and camo answers `404 Cannot proxy the given URL` for some hosts that load fine in a browser (komarev.com, as of October 2026). Open the page, copy the image address, and `curl` it.
 
 ## Part 1: your profile README
 

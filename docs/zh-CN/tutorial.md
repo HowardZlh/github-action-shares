@@ -12,11 +12,13 @@
 
 | 位置 | 贪吃蛇 | 热力图 | 3D | 项目表 | 最近动态 | 访客数 |
 |:--|:--|:--|:--|:--|:--|:--|
-| 个人主页（`login/login`） | Platane/snk | 本 Action，`source: user` | github-profile-3d-contrib | `repos:` 列表 | `users:login` | komarev |
-| 组织主页（`org/.github`） | 本 Action，`source: org` | 同左 | 同左 | `org:` | `orgs:org` | komarev |
+| 个人主页（`login/login`） | Platane/snk | 本 Action，`source: user` | github-profile-3d-contrib | `repos:` 列表 | `users:login` | visitor-badge |
+| 组织主页（`org/.github`） | 本 Action，`source: org` | 同左 | 同左 | `org:` | `orgs:org` | visitor-badge |
 | 单个仓库 | 本 Action，`source: repo` | 同左 | 同左 | — | — | visitor-badge |
 
 除了访客计数，所有图都在你自己的 Actions 里生成、存在你自己的仓库里。访客计数是第三方托管服务，数的是图片被加载了几次，不是来了几个人，看趋势就好，别当成精确人数。
+
+换用别的计数服务前，先在 github.com 上确认它真能显示。README 里的图片都经过 GitHub 的 camo 代理，有些服务在浏览器里直接打开正常，经过 camo 却返回 `404 Cannot proxy the given URL`（2026 年 10 月的 komarev.com 就是这样）。在页面上复制图片地址，用 `curl` 看一下状态码。
 
 ## 一、个人主页 README
 
