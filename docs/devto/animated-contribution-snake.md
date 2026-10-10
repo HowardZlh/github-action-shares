@@ -4,7 +4,6 @@ published: false
 description: A zero-dependency GitHub Action that draws an animated snake, heatmap and 3D skyline for a repository or an organization, not only for a user. One workflow file, no bot commits on main.
 tags: github, githubactions, opensource, showdev
 cover_image: https://raw.githubusercontent.com/HowardZlh/github-action-shares/main/docs/images/cover.png
-canonical_url: https://github.com/HowardZlh/github-action-shares
 ---
 
 ![A snake eating a year of daily contributions on a GitHub-style grid, heading for the nearest green square each time](https://raw.githubusercontent.com/HowardZlh/github-action-shares/main/docs/images/snake.gif)
