@@ -76,7 +76,20 @@ gh workflow run profile-showcase.yml --repo YOUR_LOGIN/YOUR_LOGIN
 gh run watch --repo YOUR_LOGIN/YOUR_LOGIN
 ```
 
-When the run is green, an `output` branch exists and the README images load. raw.githubusercontent.com caches for about five minutes, so a fresh image can lag behind the run.
+No `gh` at hand? Open the Actions tab, pick the workflow on the left and press **Run workflow** on `main`:
+
+<img alt="The Actions tab with a workflow selected and the Run workflow dropdown open on branch main" src="../images/run-workflow.png" width="720">
+
+When the run is green, an `output` branch exists and the README images load. It holds one bot commit, replaced on every run:
+
+<img alt="The output branch: one bot commit with the SVGs (activity, heatmap, skyline, snake) in light and dark, plus stats.json" src="../images/output-branch.png" width="720">
+
+raw.githubusercontent.com caches for about five minutes, so a fresh image can lag behind the run. This is the result on [github.com/HowardZlh](https://github.com/HowardZlh), logged out:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/profile-dark.png">
+  <img alt="HowardZlh's profile README: the snake eating 1,208 contributions, a 3D contribution calendar, and badges for busiest day, longest streak and active days" src="../images/profile.png" width="720">
+</picture>
 
 ## Part 2: an organization profile
 
@@ -93,6 +106,10 @@ Use `window: auto` there: a young org's year is mostly empty, and the grid then 
 `org:` puts every public repo into the stars table. The activity list for an org also shows `⭐ someone starred repo` and `🍴 someone forked repo`. A visitor reading that sees other people already use the project, which a profile can't show.
 
 Private repos and private contributions never appear. Nothing in this setup reads them.
+
+Here is [github.com/FailRouter](https://github.com/FailRouter) with 4 active days, so `activity.svg` is still the one-line summary:
+
+<img alt="FailRouter organization profile: repository table with a Star button, a one-line commit summary reading 24 commits since 2026-08-16, and a recent activity list" src="../images/org-profile.png" width="720">
 
 ## Part 3: a single repository
 
@@ -119,7 +136,12 @@ Reference `activity.svg`, not `snake.svg`:
 </picture>
 ```
 
-Until the repo has 10 active days (`min-days`), `activity.svg` is a single line such as "24 commits since 2026-08-16 · 4 active days · last commit 2026-10-09". After that it becomes the snake.
+Until the repo has 10 active days (`min-days`), `activity.svg` is a single line such as "24 commits since 2026-08-16 · 4 active days · last commit 2026-10-09". After that it becomes the snake. [stellar-odyssey](https://github.com/HowardZlh/stellar-odyssey#-project-activity) is past that point; its first commit was on 2026-07-19, so the grid is twelve weeks wide:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/repo-activity-dark.png">
+  <img alt="The Project Activity section of the stellar-odyssey README: 304 commits since 2026-07-19, a snake moving through a twelve-week grid" src="../images/repo-activity.png" width="720">
+</picture>
 
 The README never has to change, and nothing is committed to your default branch to switch between them.
 

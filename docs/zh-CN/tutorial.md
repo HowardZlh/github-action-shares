@@ -78,7 +78,20 @@ gh workflow run profile-showcase.yml --repo YOUR_LOGIN/YOUR_LOGIN
 gh run watch --repo YOUR_LOGIN/YOUR_LOGIN
 ```
 
-跑绿之后会多出一个 `output` 分支，README 里的图就能加载了。raw.githubusercontent.com 有大约 5 分钟的缓存，刚跑完看到旧图属于正常现象。
+手边没有 `gh`？打开 Actions 页，左侧选这个 workflow，右侧在 `main` 上点 **Run workflow**：
+
+<img alt="仓库的 Actions 页，选中一个 workflow，Run workflow 下拉框已展开，分支为 main" src="../images/run-workflow.png" width="720">
+
+跑绿之后会多出一个 `output` 分支，README 里的图就能加载了。这个分支永远只有一次机器人提交，每次运行整体替换：
+
+<img alt="output 分支：一次机器人提交，含 activity、heatmap、skyline、snake 的浅色 / 深色 SVG 和 stats.json" src="../images/output-branch.png" width="720">
+
+raw.githubusercontent.com 有大约 5 分钟的缓存，刚跑完看到旧图属于正常现象。下面是未登录时看到的 [github.com/HowardZlh](https://github.com/HowardZlh)：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/profile-dark.png">
+  <img alt="HowardZlh 的个人主页 README：贪吃蛇吃掉 1,208 次贡献、3D 贡献日历、最忙一天 / 最长连续 / 活跃天数三个徽章" src="../images/profile.png" width="720">
+</picture>
 
 ## 二、组织主页
 
@@ -95,6 +108,10 @@ gh repo create YOUR_ORG/.github --public --description "Organization profile"
 `org:` 会把全部公开仓库放进项目表。组织的动态列表里还会出现「⭐ 某人 starred 某仓库」「🍴 某人 forked 某仓库」。访客一眼就能看到已经有别人在用，个人主页给不出这种信号。
 
 私有仓库和私有贡献不会出现，整套配置根本不读它们。
+
+[github.com/FailRouter](https://github.com/FailRouter) 目前只有 4 个活跃日，所以 `activity.svg` 还是一行摘要：
+
+<img alt="FailRouter 组织主页：带 Star 按钮的项目表、一行提交摘要 24 commits since 2026-08-16、最近动态列表" src="../images/org-profile.png" width="720">
 
 ## 三、单个仓库
 
@@ -122,6 +139,13 @@ README 里引用 `activity.svg`，不要直接引用 `snake.svg`：
 ```
 
 仓库活跃不满 10 天（`min-days`）时，`activity.svg` 是一行文字，比如「24 commits since 2026-08-16 · 4 active days · last commit 2026-10-09」；满了以后自动变成贪吃蛇。README 不用改，切换时也不会往默认分支提交任何东西。
+
+[stellar-odyssey](https://github.com/HowardZlh/stellar-odyssey#-project-activity) 已经过了这条线。它的第一次提交在 2026-07-19，格子只有 12 周宽：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../images/repo-activity-dark.png">
+  <img alt="stellar-odyssey README 的 Project Activity 一节：304 commits since 2026-07-19，贪吃蛇在 12 周宽的格子里移动" src="../images/repo-activity.png" width="720">
+</picture>
 
 完整工作流见 [`examples/repo/.github/workflows/readme-showcase.yml`](../../examples/repo/.github/workflows/readme-showcase.yml)。图推到 `output` 分支，从不向 `main` 提交。如果你的项目合并到 `main` 就会部署上线，这一点很要紧：每晚刷新一次图，不该把生产流水线也跑一遍。
 
