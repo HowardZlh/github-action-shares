@@ -4,19 +4,23 @@
 
 这份教程把 [github.com/HowardZlh](https://github.com/HowardZlh)、[github.com/FailRouter](https://github.com/FailRouter) 和它们链接的几个仓库的配置拆开讲一遍。
 
-四个部分互不依赖，需要哪个看哪个。每部分大约 10 分钟，大半是在等第一次运行跑完。
+几个部分互不依赖，需要哪个看哪个。每部分大约 10 分钟，大半是在等第一次运行跑完。
 
-**目录**：[哪张图放哪里](#哪张图放哪里) · [个人主页](#一个人主页-readme) · [metrics 令牌](#二metrics-令牌) · [组织主页](#三组织主页) · [单个仓库](#四单个仓库) · [文案怎么写才有人看](#五readme-文案怎么写才有人看搜得到) · [排错](#排错)
+**目录**：[哪张图放哪里](#哪张图放哪里) · [个人主页](#一个人主页-readme) · [组织主页](#二组织主页) · [单个仓库](#三单个仓库) · [文案怎么写才有人看](#四readme-文案怎么写才有人看搜得到) · [排错](#排错)
 
 ## 哪张图放哪里
 
-| 位置 | 贪吃蛇 | 热力图 | 3D | 项目表 | 最近动态 | 访客数 |
-|:--|:--|:--|:--|:--|:--|:--|
-| 个人主页（`login/login`） | Platane/snk | 本 Action，`source: user` | github-profile-3d-contrib | `repos:` 列表 | `users:login` | visitor-badge |
-| 组织主页（`org/.github`） | 本 Action，`source: org` | 同左 | 同左 | `org:` | `orgs:org` | visitor-badge |
-| 单个仓库 | 本 Action，`source: repo` | 同左 | 同左 | — | — | visitor-badge |
+| 位置 | 图 | 数字 | 项目表 | 最近动态 |
+|:--|:--|:--|:--|:--|
+| 个人主页（`login/login`） | `art/snake.svg`（`source: user`）+ github-profile-3d-contrib | 读 `art/stats.json` 的 shields 徽章 | `repos:` 列表 | `users:login` |
+| 组织主页（`org/.github`） | `activity.svg`（`source: org`，`window: auto`） | — | `org:` | `orgs:org` |
+| 单个仓库 | `activity.svg`（`source: repo`，`window: auto`） | 顶部放 `last commit`、`release` 徽章 | — | — |
 
-除了访客计数，所有图都在你自己的 Actions 里生成、存在你自己的仓库里。访客计数是第三方托管服务，数的是图片被加载了几次，不是来了几个人，看趋势就好，别当成精确人数。
+**一页只放一张图。**热力图、贪吃蛇、3D 柱状图画的是同一份每日数字，三张都放，读者就得把同一份数据滚过三遍；个人主页 README 下面 GitHub 还会再画一张热力图。Action 仍然三张都生成，挑一张用。
+
+**会被读成短板的数字别放。**访客数 3、「0 followers」、最长连续 1 天、53 周格子里只有 4 格绿，传达给访客的意思都和你想的相反。`window: auto` 和 `activity.svg` 就是为这个准备的；访客计数等数字拿得出手了再加。
+
+除了访客计数，所有图都在你自己的 Actions 里生成、存在你自己的仓库里。访客计数是第三方托管服务，数的是图片被加载了几次，不是来了几个人。
 
 换用别的计数服务前，先在 github.com 上确认它真能显示。README 里的图片都经过 GitHub 的 camo 代理，有些服务在浏览器里直接打开正常，经过 camo 却返回 `404 Cannot proxy the given URL`（2026 年 10 月的 komarev.com 就是这样）。在页面上复制图片地址，用 `curl` 看一下状态码。
 
@@ -38,12 +42,22 @@ gh repo create YOUR_LOGIN/YOUR_LOGIN --public --description "Profile README"
 
 ```html
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/snake-dark.svg">
-  <img alt="贪吃蛇吃掉 YOUR_LOGIN 的 GitHub 贡献图" src="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/snake.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/art/snake-dark.svg">
+  <img alt="贪吃蛇吃掉 YOUR_LOGIN 的 GitHub 贡献图" src="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/art/snake.svg">
 </picture>
 ```
 
-3D 日历在 `output/3d/profile-night-rainbow.svg`（深色）和 `output/3d/profile-green-animate.svg`（浅色）。热力图、等距柱状图在 `output/art/heatmap.svg`、`output/art/skyline.svg`，各有一个 `-dark` 版本。
+3D 日历在 `output/3d/profile-night-rainbow.svg`（深色）和 `output/3d/profile-green-animate.svg`（浅色）。下面再放三个徽章，数字从 `output/art/stats.json` 读，会自己更新：
+
+```md
+![Busiest day](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=busiest%20day&query=%24.busiest.count&suffix=%20contributions&color=4d9fff)
+![Longest streak](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=longest%20streak&query=%24.longest&suffix=%20days&color=4d9fff)
+![Active days](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=active%20days&query=%24.activeDays&suffix=%20of%20the%20last%20year&color=4d9fff)
+```
+
+**主要工作在私有仓库或公司仓库里？**Action 读到的贡献日历，就是陌生人看到的那份。先在个人主页的 *Contribution settings* 里勾选 *Private contributions*，否则图里只有公开提交。勾选后私有贡献会计入数量，但不会显示仓库名。
+
+示例没有用 Platane/snk：它按颜色一层一层地吃，提交多的一年一圈要 85 秒左右，最深的格子最后才吃到。也没有用 lowlighter/metrics 卡片：它只统计公开数据，会在 2,400 次贡献的日历旁边写出「219 commits」「0 followers」，而且 3D 图里已经有语言环形图。
 
 然后放两块由 Action 维护的区域。标记之间的内容每次运行都会被替换，标记外面的一个字都不动：
 
@@ -66,24 +80,7 @@ gh run watch --repo YOUR_LOGIN/YOUR_LOGIN
 
 跑绿之后会多出一个 `output` 分支，README 里的图就能加载了。raw.githubusercontent.com 有大约 5 分钟的缓存，刚跑完看到旧图属于正常现象。
 
-## 二、metrics 令牌
-
-[lowlighter/metrics](https://github.com/lowlighter/metrics) 那张语言占比卡片需要个人访问令牌（PAT）：默认的 `GITHUB_TOKEN` 只看得见当前仓库，看不到你名下的其他仓库。没配这个 secret，工作流会跳过这张卡片，其他图照常生成，所以这一步可做可不做。
-
-先打开 [GitHub 的令牌创建页](https://github.com/settings/tokens/new?scopes=read:user,read:org&description=METRICS_TOKEN)，链接已经预选好 `read:user` 和 `read:org` 两个只读权限。过期时间选 90 天就够，快到期时 GitHub 会发邮件提醒。
-
-生成后复制，再用下面的命令存进仓库，令牌不会出现在终端历史里：
-
-```sh
-pbpaste | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN   # macOS
-# Linux：xclip -o -selection clipboard | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN
-```
-
-卡片会提交到默认分支的 `metrics/metrics.svg`，README 里用相对路径引用：`![语言占比](metrics/metrics.svg)`。
-
-`plugin_achievements` 不要开。v3.34 的成就插件还在查询经典版 Projects，GitHub 已经下线了这个接口，卡片的 Achievements 一栏会显示「Unexpected error」。
-
-## 三、组织主页
+## 二、组织主页
 
 组织主页的 README 放在组织名下、名为 `.github` 的**公开**仓库里，路径是 `profile/README.md`。
 
@@ -93,11 +90,13 @@ gh repo create YOUR_ORG/.github --public --description "Organization profile"
 
 复制 [`examples/org/.github/workflows/org-showcase.yml`](../../examples/org/.github/workflows/org-showcase.yml)。`source: org` 会对每个公开、非 fork、未归档的仓库请求 `stats/commit_activity`，再把结果加起来。GitHub 的统计是懒计算的，第一次请求会返回 `202 Accepted`。Action 会退避重试大约两分钟，所以大组织第一次跑得慢，但能跑完。
 
+这里用 `window: auto`：新组织的一年大半是空的，格子会从组织的第一次提交开始画。README 里放 `output/activity.svg`，组织活跃不满 10 天时它只是一行文字摘要。
+
 `org:` 会把全部公开仓库放进项目表。组织的动态列表里还会出现「⭐ 某人 starred 某仓库」「🍴 某人 forked 某仓库」。访客一眼就能看到已经有别人在用，个人主页给不出这种信号。
 
 私有仓库和私有贡献不会出现，整套配置根本不读它们。
 
-## 四、单个仓库
+## 三、单个仓库
 
 个人主页那两个贪吃蛇、3D Action 画不了仓库，因为贡献日历只属于个人账号。本 Action 改读 `git log` 里的提交日期：
 
@@ -109,14 +108,31 @@ gh repo create YOUR_ORG/.github --public --description "Organization profile"
   with:
     source: repo
     git-path: .
+    window: auto # 从第一次提交开始，至少 8 周宽
     out-dir: dist
 ```
 
+README 里引用 `activity.svg`，不要直接引用 `snake.svg`：
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OWNER/REPO/output/activity-dark.svg">
+  <img alt="OWNER/REPO 从第一次提交以来的提交记录" src="https://raw.githubusercontent.com/OWNER/REPO/output/activity.svg">
+</picture>
+```
+
+仓库活跃不满 10 天（`min-days`）时，`activity.svg` 是一行文字，比如「24 commits since 2026-08-16 · 4 active days · last commit 2026-10-09」；满了以后自动变成贪吃蛇。README 不用改，切换时也不会往默认分支提交任何东西。
+
 完整工作流见 [`examples/repo/.github/workflows/readme-showcase.yml`](../../examples/repo/.github/workflows/readme-showcase.yml)。图推到 `output` 分支，从不向 `main` 提交。如果你的项目合并到 `main` 就会部署上线，这一点很要紧：每晚刷新一次图，不该把生产流水线也跑一遍。
 
-图要放在 README 首屏以下。访客头几秒就在判断这个项目能不能解决他的问题，首屏该留给一句话简介、产品截图和安装命令，贪吃蛇往后排。放在 Contributing 附近一个「项目活跃度」小节里就很合适，告诉读者这个项目还活着。
+图要放在 README 首屏以下。访客头几秒就在判断这个项目能不能解决他的问题，首屏该留给一句话简介、产品截图和安装命令，贪吃蛇往后排。放在 Contributing 附近一个「项目活跃度」小节里就很合适，告诉读者这个项目还活着。那里放一张图就够。「还有没有人维护」这个问题，顶部的 `last commit` 和 `release` 徽章回答得更快：
 
-## 五、README 文案怎么写才有人看、搜得到
+```md
+[![Last commit](https://img.shields.io/github/last-commit/OWNER/REPO)](https://github.com/OWNER/REPO/commits)
+[![Release](https://img.shields.io/github/v/release/OWNER/REPO)](https://github.com/OWNER/REPO/releases)
+```
+
+## 四、README 文案怎么写才有人看、搜得到
 
 图负责把人吸引进来，点不点 Star 要看图周围的字。
 
@@ -148,7 +164,9 @@ gh repo create YOUR_ORG/.github --public --description "Organization profile"
 | 热力图只有今天一格 | checkout 没加 `fetch-depth: 0` | 加上 |
 | 推送 `output` 报 403 | 工作流令牌只读 | 写上 `permissions: contents: write`，并在 Settings → Actions → Workflow permissions 选 Read and write |
 | 定时任务不跑了 | 公开仓库 60 天没有活动，GitHub 会暂停定时任务 | Actions 页找到该工作流，点 Enable |
-| metrics 步骤显示跳过 | `METRICS_TOKEN` 没配或已过期 | 见第二部分 |
+| 图里大半是空格子 | 新仓库或新组织被画成了 53 周 | 用 `window: auto`，README 改引用 `activity.svg` |
+| `activity.svg` 是一行字，不是图 | 窗口内活跃天数不到 `min-days`（10） | 正常，满了会自动变成贪吃蛇 |
+| 个人主页的图里没有工作提交 | 私有贡献对陌生人隐藏，Action 看到的就是陌生人那份 | 个人主页 → Contribution settings → Private contributions |
 | 动态列表为空 | 只统计最近 90 天的公开事件 | 账号最近不活跃时属正常 |
 
 遇到别的问题，带上运行链接 [提个 issue](https://github.com/HowardZlh/github-action-shares/issues)。

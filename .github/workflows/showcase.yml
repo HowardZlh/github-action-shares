@@ -1,5 +1,6 @@
-# Regenerates this repo's own heatmap / snake / 3D skyline and publishes them to
-# the `output` branch, which the README reads through raw.githubusercontent.com.
+# Publishes to the `output` branch, which the README reads through raw.githubusercontent.com:
+#   /        this repo's own art (window: auto, so the young repo isn't a year of blanks)
+#   /demo/   a full year from @HowardZlh's contribution calendar, the README's showcase images
 name: Showcase
 
 on:
@@ -29,7 +30,13 @@ jobs:
           source: repo
           git-path: .
           label: commits
+          window: auto
           out-dir: dist
+      - uses: ./
+        with:
+          source: user
+          target: HowardZlh
+          out-dir: dist/demo
       - uses: crazy-max/ghaction-github-pages@v5
         with:
           target_branch: output

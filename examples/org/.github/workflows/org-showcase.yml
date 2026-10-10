@@ -3,7 +3,10 @@
 #
 # Organisations have no contribution calendar, so Platane/snk and the 3D
 # contrib action can't draw one. This action sums commit_activity across the
-# org's public repos and draws the heatmap, snake and skyline from that.
+# org's public repos and draws from that. `window: auto` starts the grid at the
+# first commit, so a young org isn't a year of empty squares; the README shows
+# activity.svg, which is the snake from 10 active days on and a one-line
+# summary before that.
 name: Org showcase
 
 on:
@@ -30,6 +33,7 @@ jobs:
           source: org
           target: ${{ github.repository_owner }}
           label: commits
+          window: auto
           out-dir: dist
       - uses: crazy-max/ghaction-github-pages@v5
         with:

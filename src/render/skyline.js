@@ -1,4 +1,5 @@
-import { escapeXml, fmt, shade, svgDoc, theme } from './theme.js';
+import { MIN_STREAK_TO_SHOW } from '../calendar.js';
+import { escapeXml, fmt, shade, svgDoc, textWidth, theme } from './theme.js';
 
 const A = 7.2; // half width of a tile on screen
 const B = 4.2; // half height of a tile on screen
@@ -23,8 +24,20 @@ export function renderSkyline(grid, { theme: themeName = 'light', label = 'contr
   // back corner is tall enough to need the room (sparse grids used to waste ~50px)
   const highest = Math.min(0, ...grid.cells.map((c) => (c.week + c.weekday) * B - barHeight(c.count, grid.max)));
   const oy = Math.ceil(58 - highest);
-  const width = Math.ceil(ox + cols * A + 16);
-  const height = Math.ceil(oy + (cols + 7) * B + 12);
+  const headline = `${fmt(grid.total)} ${label} · 3D`;
+  const lines = [
+    grid.busiest ? `Busiest day ${grid.busiest.date} (${fmt(grid.busiest.count)})` : 'No activity yet',
+    grid.longest >= MIN_STREAK_TO_SHOW ? `Longest streak ${fmt(grid.longest)} days` : null,
+    `Active on ${fmt(grid.activeDays)} of ${fmt(grid.cells.length)} days`,
+  ].filter(Boolean);
+  const dates = `${grid.start} → ${grid.end}`;
+  const width = Math.max(Math.ceil(ox + cols * A + 16), 12 + textWidth(headline, 15) + 12, ...[dates, ...lines].map((l) => 12 + textWidth(l, 11) + 12));
+  // stats sit bottom-left; on a short grid the floor reaches that corner, so drop
+  // them below the lowest tile they would otherwise overlap
+  const textRight = 12 + Math.max(...lines.map((l) => textWidth(l, 11)));
+  const floorUnderText = Math.max(0, ...grid.cells.filter((c) => ox + (c.week - c.weekday) * A - A < textRight).map((c) => oy + (c.week + c.weekday + 2) * B));
+  const statsY = Math.ceil(Math.max(oy + (cols + 7) * B - (lines.length - 1) * 16, floorUnderText + 16));
+  const height = statsY + (lines.length - 1) * 16 + 12;
   const a = A * FILL;
   const b = B * FILL;
 
@@ -42,13 +55,6 @@ export function renderSkyline(grid, { theme: themeName = 'light', label = 'contr
     return `<g class="b" style="animation-delay:${c.week * 32}ms"><title>${c.count} on ${c.date}</title>${leftFace}${rightFace}${lid}</g>`;
   });
 
-  const headline = `${fmt(grid.total)} ${label} · 3D`;
-  const lines = [
-    grid.busiest ? `Busiest day ${grid.busiest.date} (${fmt(grid.busiest.count)})` : 'No activity yet',
-    `Longest streak ${grid.longest} ${grid.longest === 1 ? 'day' : 'days'}`,
-    `Active on ${fmt(grid.activeDays)} of ${fmt(grid.cells.length)} days`,
-  ];
-  const statsY = height - 12 - (lines.length - 1) * 16;
 
   return svgDoc({
     width,
@@ -60,7 +66,7 @@ export function renderSkyline(grid, { theme: themeName = 'light', label = 'contr
       '@keyframes grow{from{transform:scaleY(0);opacity:.2}to{transform:scaleY(1);opacity:1}}',
     body: [
       `<text x="12" y="22" font-size="15" font-weight="600" fill="${t.text}">${escapeXml(headline)}</text>`,
-      `<text x="12" y="40" font-size="11" fill="${t.muted}">${escapeXml(`${grid.start} → ${grid.end}`)}</text>`,
+      `<text x="12" y="40" font-size="11" fill="${t.muted}">${escapeXml(dates)}</text>`,
       ...bars,
       ...lines.map((l, i) => `<text x="12" y="${statsY + i * 16}" font-size="11" fill="${t.muted}">${escapeXml(l)}</text>`),
     ].join('\n'),
