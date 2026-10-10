@@ -15,7 +15,7 @@
 
 上面这条蛇吃的是 [@HowardZlh](https://github.com/HowardZlh) 一年的贡献，[`showcase.yml`](.github/workflows/showcase.yml) 每晚重画一次。才建两个月的仓库，格子从第一次提交那周画起，不会摆出一整年的空格；活跃不满 10 天时只显示一行文字。
 
-**目录**：[能生成什么](#能生成什么) · [仓库三步接入](#仓库三步接入) · [个人主页](#个人主页) · [组织主页](#组织主页) · [参数](#参数) · [教程](docs/zh-CN/tutorial.md) · [实现方式](#实现方式)
+**目录**：[能生成什么](#能生成什么) · [真实页面效果](#真实页面效果) · [仓库三步接入](#仓库三步接入) · [个人主页](#个人主页) · [组织主页](#组织主页) · [参数](#参数) · [教程](docs/zh-CN/tutorial.md) · [实现方式](#实现方式)
 
 ## 能生成什么
 
@@ -45,6 +45,28 @@
   <img alt="@HowardZlh 一年每日贡献的 3D 等距柱状图，标出最忙的一天和最长连续天数" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/skyline.svg">
 </picture>
 
+## 真实页面效果
+
+下面三张截图摄于 2026-10-10，未登录状态，也就是陌生访客看到的样子。
+
+**单个仓库。** [stellar-odyssey](https://github.com/HowardZlh/stellar-odyssey#-project-activity) 2026-07-19 才有第一次提交，开了 `window: auto` 后格子只有 12 周宽，而不是 53 周：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/repo-activity-dark.png">
+  <img alt="stellar-odyssey README 的 Project Activity 一节：304 commits since 2026-07-19，贪吃蛇在 12 周宽的格子里移动" src="docs/images/repo-activity.png" width="720">
+</picture>
+
+**组织主页。** [FailRouter](https://github.com/FailRouter) 目前只有 4 个活跃日，`activity.svg` 还是一行摘要；项目表和最近动态由 `command: readme` 生成：
+
+<img alt="FailRouter 组织主页：带 Star 按钮的项目表、一行提交摘要 24 commits since 2026-08-16、最近动态列表" src="docs/images/org-profile.png" width="720">
+
+**个人主页。** [HowardZlh](https://github.com/HowardZlh)：贪吃蛇、github-profile-3d-contrib 画的 3D 日历，加三个读 `stats.json` 的徽章：
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-dark.png">
+  <img alt="HowardZlh 的个人主页 README：贪吃蛇吃掉 1,208 次贡献、3D 贡献日历、最忙一天 / 最长连续 / 活跃天数三个徽章" src="docs/images/profile.png" width="720">
+</picture>
+
 ## 仓库三步接入
 
 第一步，新建 `.github/workflows/readme-showcase.yml`：
@@ -69,7 +91,15 @@ jobs:
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 ```
 
-第二步，到 Actions 页手动跑一次。第三步，把下面这段贴进 README，`OWNER/REPO` 换成你的：
+第二步，手动跑一次：Actions 页 → 左侧选 **README showcase** → 右侧 **Run workflow**。
+
+<img alt="仓库的 Actions 页，选中一个 workflow，Run workflow 下拉框已展开，分支为 main" src="docs/images/run-workflow.png" width="720">
+
+10 到 15 秒跑完，仓库里会多出一个 `output` 分支，SVG 和 `stats.json` 都在一次机器人提交里：
+
+<img alt="output 分支：一次机器人提交，含 activity、heatmap、skyline、snake 的浅色 / 深色 SVG 和 stats.json" src="docs/images/output-branch.png" width="720">
+
+第三步，把下面这段贴进 README，`OWNER/REPO` 换成你的：
 
 ```html
 <picture>
@@ -132,6 +162,8 @@ jobs:
 ```
 
 ## 实现方式
+
+<img alt="数据流：git log、stats/commit_activity 或 GraphQL 汇成一份每日日历，Action 渲染出 8 张 SVG 和 stats.json 推到 output 分支，README 经 raw.githubusercontent.com 加载" src="docs/images/flow.png" width="720">
 
 - **零依赖。**只用 Node 自带的 `fetch`、`node:test` 和字符串模板。`action.yml` 是 composite action，直接跑 `node bin/showcase.mjs`，没有 `node_modules` 要审计，也没有 Docker 镜像要拉。
 - **动画不靠 JavaScript。**README 里的图片经 GitHub 的 camo 代理以 `<img>` 加载，脚本根本不会执行。热力图和 3D 图用 CSS 关键帧，贪吃蛇用 SMIL 的 `<animateMotion>`。

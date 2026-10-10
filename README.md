@@ -15,7 +15,7 @@ A GitHub Action that draws a contribution heatmap, a snake that eats it, and a 3
 
 That snake is eating a year of [@HowardZlh](https://github.com/HowardZlh)'s contributions, redrawn every night by [`showcase.yml`](.github/workflows/showcase.yml). A two-month-old repo gets a grid that starts at its first commit instead of a year of empty squares, and a one-line summary until it has ten active days.
 
-**Jump to**: [What you get](#what-you-get) · [Quick start](#quick-start-for-a-repository) · [Profile](#for-your-profile-readme) · [Organization](#for-an-organization-profile) · [Inputs](#inputs) · [Tutorial](docs/en/tutorial.md) · [How it works](#how-it-works)
+**Jump to**: [What you get](#what-you-get) · [On real pages](#on-real-pages) · [Quick start](#quick-start-for-a-repository) · [Profile](#for-your-profile-readme) · [Organization](#for-an-organization-profile) · [Inputs](#inputs) · [Tutorial](docs/en/tutorial.md) · [How it works](#how-it-works)
 
 ## What you get
 
@@ -45,6 +45,28 @@ All three charts draw the same daily numbers, so put **one** of them in a README
   <img alt="Isometric 3D skyline of a year of @HowardZlh's daily contributions with busiest day and longest streak" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/skyline.svg">
 </picture>
 
+## On real pages
+
+Screenshots taken on 2026-10-10, logged out, so this is what a visitor sees.
+
+**A repository.** [stellar-odyssey](https://github.com/HowardZlh/stellar-odyssey#-project-activity) started on 2026-07-19. With `window: auto` its grid is twelve weeks wide instead of fifty-three:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/repo-activity-dark.png">
+  <img alt="The Project Activity section of the stellar-odyssey README: 304 commits since 2026-07-19, a snake moving through a twelve-week grid" src="docs/images/repo-activity.png" width="720">
+</picture>
+
+**An organization.** [FailRouter](https://github.com/FailRouter) has 4 active days so far, so `activity.svg` is still the one-line summary. The table and the activity list come from `command: readme`:
+
+<img alt="FailRouter organization profile: repository table with a Star button, a one-line commit summary reading 24 commits since 2026-08-16, and a recent activity list" src="docs/images/org-profile.png" width="720">
+
+**A profile.** [HowardZlh](https://github.com/HowardZlh): the snake, the 3D calendar from github-profile-3d-contrib, and three badges reading `stats.json`:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/profile-dark.png">
+  <img alt="HowardZlh's profile README: the snake eating 1,208 contributions, a 3D contribution calendar, and badges for busiest day, longest streak and active days" src="docs/images/profile.png" width="720">
+</picture>
+
 ## Quick start for a repository
 
 Add `.github/workflows/readme-showcase.yml`:
@@ -69,7 +91,15 @@ jobs:
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 ```
 
-Run it once from the Actions tab, then put this in your README (replace `OWNER/REPO`):
+Run it once: Actions tab → **README showcase** → **Run workflow**.
+
+<img alt="The Actions tab with a workflow selected and the Run workflow dropdown open on branch main" src="docs/images/run-workflow.png" width="720">
+
+The run takes 10 to 15 seconds and leaves an `output` branch with the SVGs and `stats.json` in a single bot commit:
+
+<img alt="The output branch: one bot commit with the SVGs (activity, heatmap, skyline, snake) in light and dark, plus stats.json" src="docs/images/output-branch.png" width="720">
+
+Then put this in your README (replace `OWNER/REPO`):
 
 ```html
 <picture>
@@ -132,6 +162,8 @@ Running live: [github.com/FailRouter](https://github.com/FailRouter).
 ```
 
 ## How it works
+
+<img alt="Data flow: git log, stats/commit_activity or GraphQL feed one daily calendar; the action renders eight SVGs and stats.json into the output branch; the README loads them through raw.githubusercontent.com" src="docs/images/flow.png" width="720">
 
 - **Zero dependencies.** Node's built-in `fetch`, `node:test` and string templates. `action.yml` is a composite action that runs `node bin/showcase.mjs`, so there's no `node_modules` to audit or Docker image to pull.
 - **Animation without JavaScript.** GitHub serves README images through its camo proxy as `<img>`, where scripts never run. The heatmap and skyline use CSS keyframes, and the snake uses SMIL `<animateMotion>`.
