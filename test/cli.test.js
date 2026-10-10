@@ -60,13 +60,19 @@ test('CLI art end to end on a local repo', () => {
   const { dir } = gitRepo();
   const out = join(dir, 'dist');
   const log = execFileSync('node', [BIN, 'art', '--source', 'repo', '--target', 'o/r', '--git', dir, '--out', out], { encoding: 'utf8' });
-  assert.match(log, /repo o\/r: 2 commits, 1 active days -> 7 files/);
-  assert.equal(readdirSync(out).length, 7);
+  assert.match(log, /repo o\/r: 2 commits, 1 active days, 53 weeks from \d{4}-\d{2}-\d{2}, activity=card -> 9 files/);
+  assert.equal(readdirSync(out).length, 9);
+  const auto = execFileSync('node', [BIN, 'art', '--source', 'repo', '--target', 'o/r', '--git', dir, '--out', out, '--window', 'auto', '--min-weeks', '6', '--min-days', '1'], { encoding: 'utf8' });
+  assert.match(auto, /6 weeks from .* activity=snake/);
 });
 
 test('CLI fails loudly with a GitHub Actions error annotation', () => {
   assert.throws(() => execFileSync('node', [BIN, 'dance'], { stdio: 'pipe' }), (err) => String(err.stderr).includes('::error::first argument must be'));
   assert.throws(() => execFileSync('node', [BIN, 'art'], { stdio: 'pipe' }), (err) => String(err.stderr).includes('--target is required'));
+  const { dir } = gitRepo();
+  const art = (...a) => execFileSync('node', [BIN, 'art', '--source', 'repo', '--target', 'o/r', '--git', dir, '--out', join(dir, 'd'), ...a], { stdio: 'pipe' });
+  assert.throws(() => art('--min-days', 'ten'), (err) => String(err.stderr).includes('--min-days must be a whole number'));
+  assert.throws(() => art('--window', 'month'), (err) => String(err.stderr).includes('window must be year or auto'));
 });
 
 test('CLI readme leaves files without markers untouched', () => {

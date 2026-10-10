@@ -7,14 +7,13 @@ A GitHub Action that draws a contribution heatmap, a snake that eats it, and a 3
 [![CI](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml/badge.svg)](https://github.com/HowardZlh/github-action-shares/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Star HowardZlh/github-action-shares on GitHub](https://img.shields.io/badge/Star-on_GitHub-white?style=social&logo=github)](https://github.com/HowardZlh/github-action-shares)
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=HowardZlh.github-action-shares&left_text=visitors)](https://github.com/HowardZlh/github-action-shares)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/snake-dark.svg">
-  <img alt="Animated snake eating this repository's daily commit grid, one square at a time" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/snake.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/snake-dark.svg">
+  <img alt="Animated snake eating a year of @HowardZlh's daily contributions, heading for the nearest active day" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/snake.svg">
 </picture>
 
-That snake is eating this repo's own commits. It's regenerated every night by [`showcase.yml`](.github/workflows/showcase.yml).
+That snake is eating a year of [@HowardZlh](https://github.com/HowardZlh)'s contributions, redrawn every night by [`showcase.yml`](.github/workflows/showcase.yml). A two-month-old repo gets a grid that starts at its first commit instead of a year of empty squares, and a one-line summary until it has ten active days.
 
 **Jump to**: [What you get](#what-you-get) · [Quick start](#quick-start-for-a-repository) · [Profile](#for-your-profile-readme) · [Organization](#for-an-organization-profile) · [Inputs](#inputs) · [Tutorial](docs/en/tutorial.md) · [How it works](#how-it-works)
 
@@ -24,23 +23,26 @@ Every SVG comes in a light and a dark version, so it matches whichever GitHub th
 
 | Output | Repo | Org | User | Made by |
 |:--|:-:|:-:|:-:|:--|
+| Snake heading straight for the nearest active day | ✅ | ✅ | ✅ | this action |
 | Heatmap that fills in week by week | ✅ | ✅ | ✅ | this action |
-| Snake heading straight for the nearest active day | ✅ | ✅ | ✅ | this action (users can also use [Platane/snk](https://github.com/Platane/snk)) |
 | 3D isometric skyline with busiest day and longest streak | ✅ | ✅ | ✅ | this action (users can also use [github-profile-3d-contrib](https://github.com/yoshi389111/github-profile-3d-contrib)) |
+| `activity.svg`: the snake, or a one-line summary while a project has fewer than 10 active days | ✅ | ✅ | ✅ | this action |
+| `stats.json` for live shields badges (busiest day, streak, active days) | ✅ | ✅ | ✅ | this action |
 | Project table sorted by stars, with a live Star button per row | — | ✅ | ✅ | this action, `command: readme` |
 | Recent activity: releases, merged PRs, new repos, and for orgs who starred what | — | ✅ | ✅ | this action, `command: readme` |
-| Metrics card: languages | — | — | ✅ | [lowlighter/metrics](https://github.com/lowlighter/metrics) |
 
 The first three columns matter. GitHub only keeps a contribution calendar for user accounts, so the popular snake and 3D actions can't draw a repository or an organization. This one counts commits from `git log` (one repo) or sums `stats/commit_activity` across every public repo (an org) and draws from that.
 
+All three charts draw the same daily numbers, so put **one** of them in a README; the snake is the one people stop for. The heatmap and skyline below are drawn from the same year as the snake above.
+
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap-dark.svg">
-  <img alt="Commit heatmap of this repository over the last 53 weeks, cells popping in left to right" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/heatmap.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/heatmap-dark.svg">
+  <img alt="Heatmap of a year of @HowardZlh's daily contributions, cells popping in left to right" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/heatmap.svg">
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline-dark.svg">
-  <img alt="Isometric 3D skyline of daily commits with busiest day and longest streak" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/skyline.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/skyline-dark.svg">
+  <img alt="Isometric 3D skyline of a year of @HowardZlh's daily contributions with busiest day and longest streak" src="https://raw.githubusercontent.com/HowardZlh/github-action-shares/output/demo/skyline.svg">
 </picture>
 
 ## Quick start for a repository
@@ -61,7 +63,7 @@ jobs:
       - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       - uses: HowardZlh/github-action-shares@v1
-        with: { source: repo, git-path: ., out-dir: dist }
+        with: { source: repo, git-path: ., window: auto, out-dir: dist }
       - uses: crazy-max/ghaction-github-pages@v5
         with: { target_branch: output, build_dir: dist, keep_history: false }
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
@@ -71,16 +73,18 @@ Run it once from the Actions tab, then put this in your README (replace `OWNER/R
 
 ```html
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OWNER/REPO/output/snake-dark.svg">
-  <img alt="Snake eating OWNER/REPO's commit history" src="https://raw.githubusercontent.com/OWNER/REPO/output/snake.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OWNER/REPO/output/activity-dark.svg">
+  <img alt="OWNER/REPO commits since the first one" src="https://raw.githubusercontent.com/OWNER/REPO/output/activity.svg">
 </picture>
 ```
+
+`activity.svg` is the snake once the repo has 10 active days, and a line like "24 commits since 2026-08-16 · last commit 2026-10-09" before that, so a new project never shows a grid of empty squares. `window: auto` starts the grid at the first commit (at least 8 weeks wide) instead of 53 weeks ago.
 
 The SVGs go to a separate `output` branch. Your default branch never gets a bot commit, so a deploy workflow that runs on `push: main` stays quiet. The full file with comments is in [`examples/repo/`](examples/repo/.github/workflows/readme-showcase.yml).
 
 ## For your profile README
 
-The profile example combines three tools: Platane/snk for the snake, github-profile-3d-contrib for the 3D calendar, and this action for the heatmap and the README blocks. Put two marker pairs in `README.md`:
+The profile example combines two tools: this action for the snake, `stats.json` and the README blocks, and github-profile-3d-contrib for the 3D calendar. GitHub already draws a heatmap under every profile README, so the example doesn't add another. Put two marker pairs in `README.md`:
 
 ```md
 <!-- SHOWCASE:REPOS:START -->
@@ -109,7 +113,10 @@ Running live: [github.com/FailRouter](https://github.com/FailRouter).
 | `target` | current repo | art | `owner/repo`, org name or login |
 | `git-path` | — | art | read commit dates from this checkout instead of the stats API; needs `fetch-depth: 0` |
 | `label` | `commits` / `contributions` | art | the noun printed in the SVG titles |
-| `out-dir` | `dist` | art | where the 6 SVGs and `stats.json` go |
+| `window` | `year` | art | `year`: the last 53 weeks. `auto`: from the week of the first active day, at least `min-weeks` wide; use it for repos and orgs younger than a year |
+| `min-weeks` | `8` | art | narrowest grid when `window: auto` |
+| `min-days` | `10` | art | `activity.svg` is the snake from this many active days on, a one-line summary below it |
+| `out-dir` | `dist` | art | where the 8 SVGs and `stats.json` go |
 | `readme` | `README.md` | readme | file to rewrite |
 | `repos` | — | readme | comma-separated `owner/repo` list for the stars table |
 | `org` | — | readme | add every public, non-fork repo of this org to the table |
@@ -118,7 +125,11 @@ Running live: [github.com/FailRouter](https://github.com/FailRouter).
 | `skip-repos` | — | readme | `owner/repo` list to leave out of the activity list |
 | `token` | `github.token` | both | the default is enough; `source: user` needs it for GraphQL |
 
-`art` writes `heatmap.svg`, `snake.svg`, `skyline.svg`, the same three with `-dark`, and `stats.json` with the yearly total, the busiest day and the streaks, in case you want to quote a number in your own copy.
+`art` writes `heatmap.svg`, `snake.svg`, `skyline.svg`, `activity.svg`, the same four with `-dark`, and `stats.json` with the total, the busiest day, the streaks, the first and last active day and the window. Quote a number from it in a live badge:
+
+```md
+![Longest streak](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FOWNER%2FREPO%2Foutput%2Fstats.json&label=longest%20streak&query=%24.longest&suffix=%20days)
+```
 
 ## How it works
 
@@ -126,7 +137,9 @@ Running live: [github.com/FailRouter](https://github.com/FailRouter).
 - **Animation without JavaScript.** GitHub serves README images through its camo proxy as `<img>`, where scripts never run. The heatmap and skyline use CSS keyframes, and the snake uses SMIL `<animateMotion>`.
 - **The snake only walks where it has to.** It enters from the top-left, always heads for the nearest uneaten square (one cell per step), and leaves through the nearer side; each eaten cell gets one `<animate>` timed to the step the head arrives. A loop lasts 8 to 30 seconds however sparse or busy the year was.
 - **Reduced motion is respected.** The CSS animations switch off under `prefers-reduced-motion: reduce`, and the SVG shows the final frame.
-- **Readable by screen readers and search engines.** Each SVG has `role="img"`, a `<title>` with the real number ("569 contributions in the last year") and a `<desc>` with the date range. Each cell carries a tooltip with its date and count.
+- **Readable by screen readers and search engines.** Each SVG has `role="img"`, a `<title>` with the real number ("569 contributions in the last year") and a `<desc>` with the date range.
+- **No interactivity in a README, by design of GitHub.** Hover tooltips and drag-to-rotate need scripts or pointer events, and an `<img>` behind camo gets neither. If you want an explorable chart, link the image to a page you host.
+- **Nothing that reads as a weakness.** A streak under three days is left out of the text, and a project with fewer than ten active days gets a sentence instead of a mostly empty grid.
 - **Quartile colouring**, the way GitHub does it: one 68-contribution day doesn't wash the rest of the year out to the palest green.
 
 The tests run against a throwaway git repository and a fake `fetch`, with no network. `npm run coverage` fails under 90% lines or 80% branches.
@@ -139,7 +152,7 @@ node bin/showcase.mjs art --source repo --target me/repo --git . --out dist   # 
 
 ## Tutorial
 
-A step-by-step guide: creating the profile repo, the metrics token, the org `.github` repo, dark-mode images, README copy that holds up in search results, and troubleshooting. Read it in [English](docs/en/tutorial.md) or [中文](docs/zh-CN/tutorial.md).
+A step-by-step guide: creating the profile repo, the org `.github` repo, a young repository, dark-mode images, README copy that holds up in search results, and troubleshooting. Read it in [English](docs/en/tutorial.md) or [中文](docs/zh-CN/tutorial.md).
 
 ## Used by
 

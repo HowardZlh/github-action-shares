@@ -36,6 +36,12 @@ export function shade(hex, factor) {
 
 export const fmt = (n) => Number(n).toLocaleString('en-US');
 
+/**
+ * Rough rendered width of a Latin label (system UI fonts average ~0.6em per
+ * character). Narrow grids use it so their own headline isn't clipped.
+ */
+export const textWidth = (s, size) => Math.ceil(String(s).length * size * 0.6);
+
 /** Root <svg> with an accessible name; reduced-motion users get a static image. */
 export function svgDoc({ width, height, title, desc, style = '', body }) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="t d">

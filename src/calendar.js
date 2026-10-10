@@ -81,13 +81,36 @@ export function streaks(cells) {
   return { longest, current };
 }
 
+export const WINDOWS = ['year', 'auto'];
+
 /**
- * Build the grid ending at `today` (UTC). Column 0 starts on the Sunday 52 weeks
- * before the current week, so there are 53 columns and the last one is partial.
+ * First column of the grid. `year`: the Sunday 52 weeks before the current week
+ * (53 columns, GitHub's layout). `auto`: the Sunday of the first active day in
+ * that year, but never fewer than `minWeeks` columns, so a two-month-old project
+ * isn't drawn as a year of empty squares.
  */
-export function buildGrid(counts, today = new Date()) {
+export function gridStart(counts, end, { window = 'year', minWeeks = 8 } = {}) {
+  if (!WINDOWS.includes(window)) throw new Error(`window must be ${WINDOWS.join(' or ')} (got "${window}")`);
+  const weeks = Math.max(1, Math.min(53, Math.floor(Number(minWeeks)) || 1));
+  const thisSunday = end.getTime() - end.getUTCDay() * DAY_MS;
+  const yearStart = thisSunday - 52 * 7 * DAY_MS;
+  if (window === 'year') return new Date(yearStart);
+  const floor = thisSunday - (weeks - 1) * 7 * DAY_MS;
+  const first = [...counts.keys()].filter((d) => counts.get(d) > 0 && d >= isoDate(new Date(yearStart)) && d <= isoDate(end)).sort()[0];
+  if (!first) return new Date(floor);
+  const f = new Date(`${first}T00:00:00Z`);
+  const firstSunday = f.getTime() - f.getUTCDay() * DAY_MS;
+  return new Date(Math.max(yearStart, Math.min(firstSunday, floor)));
+}
+
+/**
+ * Build the grid ending at `today` (UTC); see `gridStart` for where it begins.
+ * The last column is partial.
+ */
+export function buildGrid(counts, today = new Date(), { window = 'year', minWeeks = 8 } = {}) {
   const end = utcMidnight(today);
-  const start = new Date(end.getTime() - (52 * 7 + end.getUTCDay()) * DAY_MS);
+  const start = gridStart(counts, end, { window, minWeeks });
+  const cropped = end.getTime() - start.getTime() < (52 * 7 + end.getUTCDay()) * DAY_MS;
   const weeks = [];
   const cells = [];
   for (let t = start.getTime(); t <= end.getTime(); t += DAY_MS) {
@@ -100,15 +123,26 @@ export function buildGrid(counts, today = new Date()) {
   assignLevels(cells);
   const total = cells.reduce((s, c) => s + c.count, 0);
   const busiest = cells.reduce((best, c) => (c.count > best.count ? c : best), cells[0]);
+  const active = cells.filter((c) => c.count > 0);
   return {
     weeks,
     cells,
     start: isoDate(start),
     end: isoDate(end),
+    window,
+    cropped,
+    firstActive: active[0]?.date ?? null,
+    lastActive: active.at(-1)?.date ?? null,
     total,
     max: busiest.count,
     busiest: busiest.count > 0 ? { date: busiest.date, count: busiest.count } : null,
-    activeDays: cells.filter((c) => c.count > 0).length,
+    activeDays: active.length,
     ...streaks(cells),
   };
 }
+
+/** "in the last year" for a full grid, "since 2026-07-26" for a cropped one. */
+export const period = (grid) => (grid.cropped ? `since ${grid.start}` : 'in the last year');
+
+/** A one-day "longest streak" reads as a weakness, not a fact worth showing. */
+export const MIN_STREAK_TO_SHOW = 3;

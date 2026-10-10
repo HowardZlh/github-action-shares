@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assignLevels, buildGrid, countDates, fromCommitActivity, fromContributionCalendar, mergeCounts, streaks } from '../src/calendar.js';
+import { assignLevels, buildGrid, countDates, fromCommitActivity, fromContributionCalendar, gridStart, mergeCounts, period, streaks } from '../src/calendar.js';
 
 const TODAY = new Date('2026-10-09T15:00:00Z'); // a Friday
 
@@ -60,4 +60,41 @@ test('buildGrid with no data has no busiest day', () => {
   const g = buildGrid(new Map(), TODAY);
   assert.equal(g.total, 0);
   assert.equal(g.busiest, null);
+});
+
+test('window=year keeps 53 columns and says "in the last year"', () => {
+  const g = buildGrid(new Map([['2026-09-28', 2]]), TODAY);
+  assert.equal(g.weeks.length, 53);
+  assert.equal(g.cropped, false);
+  assert.equal(g.window, 'year');
+  assert.equal(period(g), 'in the last year');
+});
+
+test('window=auto starts at the first active week, never narrower than minWeeks', () => {
+  // young project: first commit 2026-07-28 (a Tuesday) -> grid starts Sunday 2026-07-26
+  const young = buildGrid(new Map([['2026-07-28', 22], ['2026-10-09', 1]]), TODAY, { window: 'auto' });
+  assert.equal(young.start, '2026-07-26');
+  assert.equal(young.weeks.length, 11);
+  assert.equal(young.cropped, true);
+  assert.equal(young.firstActive, '2026-07-28');
+  assert.equal(young.lastActive, '2026-10-09');
+  assert.equal(period(young), 'since 2026-07-26');
+  // two weeks of history still gets the 8-week floor
+  const baby = buildGrid(new Map([['2026-09-30', 1]]), TODAY, { window: 'auto', minWeeks: 8 });
+  assert.equal(baby.weeks.length, 8);
+  assert.equal(baby.start, '2026-08-16');
+  // activity older than a year is ignored; a full year stays uncropped
+  const old = buildGrid(new Map([['2024-01-01', 9], ['2025-10-06', 1]]), TODAY, { window: 'auto' });
+  assert.equal(old.weeks.length, 53);
+  assert.equal(old.cropped, false);
+  // empty: the floor
+  assert.equal(buildGrid(new Map(), TODAY, { window: 'auto', minWeeks: 4 }).weeks.length, 4);
+});
+
+test('gridStart validates its options', () => {
+  const end = new Date('2026-10-09T00:00:00Z');
+  assert.throws(() => gridStart(new Map(), end, { window: 'month' }), /window must be year or auto/);
+  // minWeeks is clamped to 1..53
+  assert.equal(gridStart(new Map(), end, { window: 'auto', minWeeks: 0 }).toISOString().slice(0, 10), '2026-10-04');
+  assert.equal(gridStart(new Map(), end, { window: 'auto', minWeeks: 99 }).toISOString().slice(0, 10), '2025-10-05');
 });

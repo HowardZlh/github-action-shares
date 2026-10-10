@@ -1,5 +1,7 @@
 # Copy to <your repo>/.github/workflows/readme-showcase.yml
-# Output: heatmap / snake / skyline SVGs (light + dark) on the `output` branch.
+# Output: heatmap / snake / skyline / activity SVGs (light + dark) on the `output` branch.
+# Point the README at activity.svg: it is the snake once the repo has 10 active
+# days and a one-line summary ("24 commits since ...") before that.
 # Nothing is committed to your default branch, so deploy workflows that listen
 # to `main` are never triggered by this one.
 name: README showcase
@@ -31,6 +33,7 @@ jobs:
           source: repo
           git-path: .
           label: commits
+          window: auto # start at the first commit, at least 8 weeks wide
           out-dir: dist
       - uses: crazy-max/ghaction-github-pages@v5
         with:

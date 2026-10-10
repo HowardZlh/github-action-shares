@@ -29,7 +29,7 @@ jobs:
           out-dir: ci-dist
       - name: Every SVG parses
         run: |
-          sudo apt-get install -y -qq libxml2-utils >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils >/dev/null # update first: a stale mirror index 404s
           ls ci-dist
-          test "$(ls ci-dist/*.svg | wc -l)" -eq 6
+          test "$(ls ci-dist/*.svg | wc -l)" -eq 8 # heatmap, snake, skyline, activity x light/dark
           xmllint --noout ci-dist/*.svg

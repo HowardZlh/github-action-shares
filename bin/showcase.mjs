@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Usage:
 //   showcase.mjs art    --source repo|org|user --target <owner/repo|org|user> [--git <dir>] [--out dist] [--label commits]
+//                       [--window year|auto] [--min-weeks 8] [--min-days 10]
 //   showcase.mjs readme --file README.md [--repos a/b,c/d] [--org <org>] [--activity users:<login>|orgs:<org>] [--limit 8]
 // Token: GITHUB_TOKEN or GH_TOKEN.
 
@@ -11,6 +12,7 @@ import { parseArgs } from 'node:util';
 import { buildGrid, countDates, fromCommitActivity, fromContributionCalendar, mergeCounts } from '../src/calendar.js';
 import { createClient } from '../src/github.js';
 import { hasBlock, renderActivity, renderRepoTable, replaceBlock } from '../src/readme.js';
+import { MIN_ACTIVE_DAYS, renderCard } from '../src/render/card.js';
 import { renderHeatmap } from '../src/render/heatmap.js';
 import { renderSkyline } from '../src/render/skyline.js';
 import { renderSnake } from '../src/render/snake.js';
@@ -45,13 +47,19 @@ export async function loadCounts({ source, target, git, client }) {
   throw new Error(`--source must be repo, org or user (got "${source}")`);
 }
 
-export function renderAll(grid, { out, label }) {
+/**
+ * Writes heatmap / snake / skyline, plus `activity`: the snake once the grid has
+ * `minDays` active days, a two-line text card before that. A README that points
+ * at activity.svg never shows a near-empty grid and never needs editing.
+ */
+export function renderAll(grid, { out, label, minDays = MIN_ACTIVE_DAYS }) {
   mkdirSync(out, { recursive: true });
   const files = [];
   for (const [name, render] of [
     ['heatmap', renderHeatmap],
     ['snake', renderSnake],
     ['skyline', renderSkyline],
+    ['activity', grid.activeDays >= minDays ? renderSnake : renderCard],
   ]) {
     for (const theme of ['light', 'dark']) {
       const file = join(out, theme === 'light' ? `${name}.svg` : `${name}-dark.svg`);
@@ -69,9 +77,12 @@ async function art(opts, client) {
   if (!opts.target) throw new Error('--target is required');
   const counts = await loadCounts({ ...opts, client });
   const label = opts.label || (opts.source === 'user' ? 'contributions' : 'commits');
-  const grid = buildGrid(counts);
-  const files = renderAll(grid, { out: opts.out, label });
-  console.log(`${opts.source} ${opts.target}: ${grid.total} ${label}, ${grid.activeDays} active days -> ${files.length} files in ${opts.out}/`);
+  const minDays = Number(opts['min-days']);
+  if (!Number.isInteger(minDays) || minDays < 0) throw new Error(`--min-days must be a whole number (got "${opts['min-days']}")`);
+  const grid = buildGrid(counts, new Date(), { window: opts.window, minWeeks: Number(opts['min-weeks']) });
+  const files = renderAll(grid, { out: opts.out, label, minDays });
+  const shown = grid.activeDays >= minDays ? 'snake' : 'card';
+  console.log(`${opts.source} ${opts.target}: ${grid.total} ${label}, ${grid.activeDays} active days, ${grid.weeks.length} weeks from ${grid.start}, activity=${shown} -> ${files.length} files in ${opts.out}/`);
 }
 
 async function readme(opts, client) {
@@ -107,6 +118,9 @@ async function main(argv) {
       activity: { type: 'string', default: '' },
       limit: { type: 'string', default: '8' },
       'skip-repos': { type: 'string', default: '' },
+      window: { type: 'string', default: 'year' },
+      'min-weeks': { type: 'string', default: '8' },
+      'min-days': { type: 'string', default: String(MIN_ACTIVE_DAYS) },
     },
   });
   const client = createClient({ token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '' });

@@ -1,5 +1,5 @@
 name: README Showcase Art
-description: Animated contribution heatmap, snake and 3D skyline SVGs for any repo, org or user, plus auto-updated stars and activity blocks. Zero dependencies.
+description: Animated contribution heatmap, snake and 3D skyline SVGs for any repo, org or user, cropped to a young project's lifetime, plus auto-updated stars and activity blocks. Zero dependencies.
 author: HowardZlh
 branding:
   icon: activity
@@ -24,6 +24,15 @@ inputs:
   out-dir:
     description: "art only: output directory"
     default: dist
+  window:
+    description: "art only: year = the last 53 weeks (GitHub's layout); auto = start at the week of the first active day, at least min-weeks wide. Use auto for young repos and orgs"
+    default: year
+  min-weeks:
+    description: "art + window=auto: narrowest grid in weeks"
+    default: "8"
+  min-days:
+    description: "art only: activity.svg is the snake from this many active days on, a two-line text card below it"
+    default: "10"
   readme:
     description: "readme only: file to rewrite"
     default: README.md
@@ -59,6 +68,9 @@ runs:
         IN_GIT: ${{ inputs.git-path }}
         IN_LABEL: ${{ inputs.label }}
         IN_OUT: ${{ inputs.out-dir }}
+        IN_WINDOW: ${{ inputs.window }}
+        IN_MIN_WEEKS: ${{ inputs.min-weeks }}
+        IN_MIN_DAYS: ${{ inputs.min-days }}
         IN_README: ${{ inputs.readme }}
         IN_REPOS: ${{ inputs.repos }}
         IN_ORG: ${{ inputs.org }}
@@ -69,7 +81,8 @@ runs:
         set -euo pipefail
         bin="$GITHUB_ACTION_PATH/bin/showcase.mjs"
         if [ "$IN_COMMAND" = "art" ]; then
-          node "$bin" art --source "$IN_SOURCE" --target "$IN_TARGET" --git "$IN_GIT" --label "$IN_LABEL" --out "$IN_OUT"
+          node "$bin" art --source "$IN_SOURCE" --target "$IN_TARGET" --git "$IN_GIT" --label "$IN_LABEL" --out "$IN_OUT" \
+            --window "$IN_WINDOW" --min-weeks "$IN_MIN_WEEKS" --min-days "$IN_MIN_DAYS"
         else
           node "$bin" readme --file "$IN_README" --repos "$IN_REPOS" --org "$IN_ORG" \
             --activity "$IN_ACTIVITY" --limit "$IN_LIMIT" --skip-repos "$IN_SKIP"

@@ -8,6 +8,7 @@ import { renderAll } from '../bin/showcase.mjs';
 import { buildGrid } from '../src/calendar.js';
 import { renderHeatmap } from '../src/render/heatmap.js';
 import { barHeight, renderSkyline } from '../src/render/skyline.js';
+import { MIN_ACTIVE_DAYS, renderCard } from '../src/render/card.js';
 import { planRoute, renderSnake, stepSeconds, walk } from '../src/render/snake.js';
 import { escapeXml, shade, theme } from '../src/render/theme.js';
 
@@ -121,7 +122,9 @@ test('skyline bars grow and stay sub-linear', () => {
   const svg = renderSkyline(grid);
   assert.equal((svg.match(/class="b"/g) ?? []).length, grid.activeDays);
   assert.match(svg, /Busiest day/);
-  assert.match(renderSkyline(buildGrid(new Map([['2026-10-09', 1]]), TODAY)), /Longest streak 1 day</);
+  // a 1-day "longest streak" reads as a weakness: left out below 3 days
+  assert.doesNotMatch(renderSkyline(buildGrid(new Map([['2026-10-09', 1]]), TODAY)), /Longest streak/);
+  assert.match(renderSkyline(buildGrid(new Map([['2026-10-07', 1], ['2026-10-08', 1], ['2026-10-09', 1]]), TODAY)), /Longest streak 3 days</);
   assert.match(renderSkyline(buildGrid(new Map(), TODAY)), /No activity yet/);
   // cropped: a sparse grid whose only bar is at the front is shorter than one with a tall bar at the back
   const front = renderSkyline(buildGrid(new Map([['2026-10-09', 9]]), TODAY));
@@ -137,11 +140,57 @@ test('theme helpers', () => {
   assert.equal(escapeXml(`<a href="x">'&'</a>`), '&lt;a href=&quot;x&quot;&gt;&apos;&amp;&apos;&lt;/a&gt;');
 });
 
-test('renderAll writes six SVGs and stats.json', () => {
+test('renderAll writes eight SVGs and stats.json; activity is the snake once there is enough data', () => {
   const out = mkdtempSync(join(tmpdir(), 'art-'));
   renderAll(grid, { out, label: 'commits' });
-  assert.deepEqual(readdirSync(out).sort(), ['heatmap-dark.svg', 'heatmap.svg', 'skyline-dark.svg', 'skyline.svg', 'snake-dark.svg', 'snake.svg', 'stats.json']);
+  assert.deepEqual(readdirSync(out).sort(), [
+    'activity-dark.svg', 'activity.svg', 'heatmap-dark.svg', 'heatmap.svg', 'skyline-dark.svg', 'skyline.svg', 'snake-dark.svg', 'snake.svg', 'stats.json',
+  ]);
+  assert.equal(readFileSync(join(out, 'activity.svg'), 'utf8'), readFileSync(join(out, 'snake.svg'), 'utf8'));
   const stats = JSON.parse(readFileSync(join(out, 'stats.json'), 'utf8'));
   assert.equal(stats.total, grid.total);
   assert.equal(stats.weeks, undefined);
+  assert.equal(stats.lastActive, '2026-10-09');
+
+  const young = buildGrid(new Map([['2026-09-28', 20], ['2026-10-09', 1]]), TODAY, { window: 'auto' });
+  const out2 = mkdtempSync(join(tmpdir(), 'art-'));
+  renderAll(young, { out: out2, label: 'commits' });
+  assert.match(readFileSync(join(out2, 'activity.svg'), 'utf8'), /21 commits since 2026-08-16/);
+  assert.doesNotMatch(readFileSync(join(out2, 'activity.svg'), 'utf8'), /animateMotion/);
+  renderAll(young, { out: out2, label: 'commits', minDays: 2 });
+  assert.match(readFileSync(join(out2, 'activity.svg'), 'utf8'), /animateMotion/);
+});
+
+test('card: headline, last active day, pulse only while fresh', () => {
+  assert.equal(MIN_ACTIVE_DAYS, 10);
+  const fresh = renderCard(buildGrid(new Map([['2026-10-08', 1]]), TODAY, { window: 'auto' }), { label: 'commits' });
+  assertWellFormed(fresh);
+  assert.match(fresh, />1 commit since 2026-08-16</);
+  assert.match(fresh, />1 active day · last commit 2026-10-08</);
+  assert.match(fresh, /class="p"/);
+  const stale = renderCard(buildGrid(new Map([['2026-01-05', 4]]), TODAY), { theme: 'dark', label: 'commits' });
+  assert.match(stale, />4 commits in the last year</);
+  assert.doesNotMatch(stale, /class="p"/);
+  const none = renderCard(buildGrid(new Map(), TODAY, { window: 'auto' }));
+  assert.match(none, />No commits since 2026-08-16</);
+  assert.match(none, />Nothing to show yet</);
+});
+
+test('narrow auto grids grow the canvas to fit their own text, and the snake still leaves it', () => {
+  const young = buildGrid(new Map([['2026-09-28', 20], ['2026-09-29', 3], ['2026-10-09', 1]]), TODAY, { window: 'auto' });
+  assert.equal(young.weeks.length, 8);
+  const w = (svg) => Number(svg.match(/width="(\d+)"/)[1]);
+  const snake = renderSnake(young, { label: 'commits' });
+  assert.match(snake, />24 commits since 2026-08-16</);
+  assert.ok(w(snake) >= 6 + Math.ceil('24 commits since 2026-08-16'.length * 13 * 0.6));
+  const { points } = planRoute(young, { visibleCols: Math.ceil((w(snake) - 6) / 14) });
+  assert.ok(points.at(-1).week < 0 || (points.at(-1).week - 5) * 14 + 6 > w(snake), 'snake rests off canvas');
+  assert.match(renderHeatmap(young, { label: 'commits' }), />24 commits since 2026-08-16</);
+  assert.ok(w(renderHeatmap(young)) >= 182);
+  const sky = renderSkyline(young);
+  assertWellFormed(sky);
+  // the stats block starts below every floor tile it shares columns with
+  const firstStatY = Number(sky.match(/<text x="12" y="(\d+)" font-size="11" fill="[^"]+">Busiest/)[1]);
+  const tileYs = [...sky.matchAll(/<polygon points="([\d.]+),([\d.]+) /g)].filter((m) => Number(m[1]) < 200).map((m) => Number(m[2]));
+  assert.ok(firstStatY > Math.max(...tileYs), `${firstStatY} vs ${Math.max(...tileYs)}`);
 });

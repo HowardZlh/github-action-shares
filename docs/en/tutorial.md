@@ -4,17 +4,21 @@
 
 This guide wires up the three setups running on [github.com/HowardZlh](https://github.com/HowardZlh), [github.com/FailRouter](https://github.com/FailRouter) and the repos linked from them. Each part stands alone, so skip to the one you need. Expect about 10 minutes per part, most of it waiting for the first workflow run.
 
-**Contents**: [Which output goes where](#which-output-goes-where) · [Profile README](#part-1-your-profile-readme) · [Metrics token](#part-2-the-metrics-token) · [Organization profile](#part-3-an-organization-profile) · [A single repository](#part-4-a-single-repository) · [README copy that gets read](#part-5-readme-copy-that-gets-read-and-found) · [Troubleshooting](#troubleshooting)
+**Contents**: [Which output goes where](#which-output-goes-where) · [Profile README](#part-1-your-profile-readme) · [Organization profile](#part-2-an-organization-profile) · [A single repository](#part-3-a-single-repository) · [README copy that gets read](#part-4-readme-copy-that-gets-read-and-found) · [Troubleshooting](#troubleshooting)
 
 ## Which output goes where
 
-| Where | Snake | Heatmap | 3D | Stars table | Activity | Visitors |
-|:--|:--|:--|:--|:--|:--|:--|
-| Profile (`login/login`) | Platane/snk | this action, `source: user` | github-profile-3d-contrib | `repos:` list | `users:login` | visitor-badge |
-| Org (`org/.github`) | this action, `source: org` | same | same | `org:` | `orgs:org` | visitor-badge |
-| Repo | this action, `source: repo` | same | same | — | — | visitor-badge |
+| Where | Chart | Numbers | Stars table | Activity |
+|:--|:--|:--|:--|:--|
+| Profile (`login/login`) | `art/snake.svg` (`source: user`) + github-profile-3d-contrib | shields badges reading `art/stats.json` | `repos:` list | `users:login` |
+| Org (`org/.github`) | `activity.svg` (`source: org`, `window: auto`) | — | `org:` | `orgs:org` |
+| Repo | `activity.svg` (`source: repo`, `window: auto`) | `last commit` / `release` shields badges at the top | — | — |
 
-Everything except the visitor counters is generated inside your own Actions run and stored in your own repo. The visitor counters are hosted services and they count image loads, not people. Treat the number as a trend.
+**One chart per page.** The heatmap, the snake and the skyline draw the same daily numbers. Three of them make a reader scroll past one dataset three times, and a profile already has GitHub's own heatmap under the README. The action still writes all of them, so you can pick.
+
+**Leave out numbers that read as weaknesses.** A visitor counter at 3, a "0 followers" card, a one-day streak or a 53-week grid with four green squares all tell a visitor the opposite of what you meant. `window: auto` and `activity.svg` exist for exactly that; add a visitor counter only once it shows a number you'd quote.
+
+Everything except a visitor counter is generated inside your own Actions run and stored in your own repo. Visitor counters are hosted services and they count image loads, not people.
 
 Check that a badge service actually renders on github.com before you rely on it. README images go through GitHub's camo proxy, and camo answers `404 Cannot proxy the given URL` for some hosts that load fine in a browser (komarev.com, as of October 2026). Open the page, copy the image address, and `curl` it.
 
@@ -36,12 +40,22 @@ Then the images. Always wrap them in `<picture>`, so dark-mode visitors get the 
 
 ```html
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/snake-dark.svg">
-  <img alt="Snake eating YOUR_LOGIN's GitHub contribution graph" src="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/snake.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/art/snake-dark.svg">
+  <img alt="Snake eating YOUR_LOGIN's GitHub contribution graph" src="https://raw.githubusercontent.com/YOUR_LOGIN/YOUR_LOGIN/output/art/snake.svg">
 </picture>
 ```
 
-The 3D calendar lives at `output/3d/profile-night-rainbow.svg` (dark) and `output/3d/profile-green-animate.svg` (light). The heatmap and skyline are at `output/art/heatmap.svg` and `output/art/skyline.svg`, each with a `-dark` twin.
+The 3D calendar lives at `output/3d/profile-night-rainbow.svg` (dark) and `output/3d/profile-green-animate.svg` (light). Under it, three badges that update themselves from `output/art/stats.json`:
+
+```md
+![Busiest day](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=busiest%20day&query=%24.busiest.count&suffix=%20contributions&color=4d9fff)
+![Longest streak](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=longest%20streak&query=%24.longest&suffix=%20days&color=4d9fff)
+![Active days](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FYOUR_LOGIN%2FYOUR_LOGIN%2Foutput%2Fart%2Fstats.json&label=active%20days&query=%24.activeDays&suffix=%20of%20the%20last%20year&color=4d9fff)
+```
+
+**Most of your work is in private or company repos?** The calendar the action reads is the one strangers see. Turn on *Contribution settings → Private contributions* on your profile, or the charts show only your public commits. Private work is then counted, but never named.
+
+The example leaves out Platane/snk (it eats one colour layer after another, so a busy year loops for about 85 seconds and the darkest days come last) and the lowlighter/metrics card (its counts are public-only, so it can say "219 commits" and "0 followers" next to a calendar of 2,400 contributions, and the 3D chart already has a language donut).
 
 Add the two blocks the action keeps up to date. Text between the markers is replaced on every run, and anything outside them is left alone:
 
@@ -64,24 +78,7 @@ gh run watch --repo YOUR_LOGIN/YOUR_LOGIN
 
 When the run is green, an `output` branch exists and the README images load. raw.githubusercontent.com caches for about five minutes, so a fresh image can lag behind the run.
 
-## Part 2: the metrics token
-
-The [lowlighter/metrics](https://github.com/lowlighter/metrics) languages card needs a personal access token, because the default `GITHUB_TOKEN` can only see the repository it runs in. The workflow skips the card when the secret is missing, so this part is optional.
-
-1. Open [GitHub's new-token page](https://github.com/settings/tokens/new?scopes=read:user,read:org&description=METRICS_TOKEN). The link pre-fills a classic token with only `read:user` and `read:org`.
-2. Pick an expiry (90 days is a reasonable default, and GitHub emails you before it lapses) and generate it.
-3. Copy it, then store it without it ever showing up in your terminal history:
-
-```sh
-pbpaste | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN   # macOS
-# Linux: xclip -o -selection clipboard | gh secret set METRICS_TOKEN --repo YOUR_LOGIN/YOUR_LOGIN
-```
-
-The card is committed to `metrics/metrics.svg` on the default branch, so reference it with a relative path: `![Languages](metrics/metrics.svg)`.
-
-Leave `plugin_achievements` off. In v3.34 it still queries classic Projects, which GitHub has removed, and the card renders "Unexpected error" under Achievements.
-
-## Part 3: an organization profile
+## Part 2: an organization profile
 
 An organization's homepage README is `profile/README.md` inside a **public** repository named `.github` owned by the org.
 
@@ -91,11 +88,13 @@ gh repo create YOUR_ORG/.github --public --description "Organization profile"
 
 Copy [`examples/org/.github/workflows/org-showcase.yml`](../../examples/org/.github/workflows/org-showcase.yml). `source: org` asks GitHub for `stats/commit_activity` on every public, non-fork, non-archived repo and adds them up. GitHub computes those statistics lazily and answers `202 Accepted` the first time. The action retries with back-off for about two minutes, so a first run on a big org is slow but succeeds.
 
+Use `window: auto` there: a young org's year is mostly empty, and the grid then starts at the org's first commit. In the README, show `output/activity.svg`, which stays a one-line summary until the org has 10 active days.
+
 `org:` puts every public repo into the stars table. The activity list for an org also shows `⭐ someone starred repo` and `🍴 someone forked repo`. A visitor reading that sees other people already use the project, which a profile can't show.
 
 Private repos and private contributions never appear. Nothing in this setup reads them.
 
-## Part 4: a single repository
+## Part 3: a single repository
 
 The snake and 3D actions for profiles can't draw a repository, because only user accounts have a contribution calendar. This action counts commit dates from `git log` instead:
 
@@ -107,14 +106,33 @@ The snake and 3D actions for profiles can't draw a repository, because only user
   with:
     source: repo
     git-path: .
+    window: auto # start at the first commit, at least 8 weeks wide
     out-dir: dist
 ```
 
+Reference `activity.svg`, not `snake.svg`:
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/OWNER/REPO/output/activity-dark.svg">
+  <img alt="OWNER/REPO commits since the first one" src="https://raw.githubusercontent.com/OWNER/REPO/output/activity.svg">
+</picture>
+```
+
+Until the repo has 10 active days (`min-days`), `activity.svg` is a single line such as "24 commits since 2026-08-16 · 4 active days · last commit 2026-10-09". After that it becomes the snake.
+
+The README never has to change, and nothing is committed to your default branch to switch between them.
+
 The full workflow is [`examples/repo/.github/workflows/readme-showcase.yml`](../../examples/repo/.github/workflows/readme-showcase.yml). It pushes the SVGs to an `output` branch and never commits to `main`. That matters if merging to `main` deploys your site: a nightly art refresh shouldn't run your production pipeline.
 
-Put the art below the first screen of the README. Visitors decide in the first few seconds whether the project solves their problem. The description, a screenshot of the product and the install command belong there, and the snake doesn't. A "Project activity" section near Contributing works well, as a sign that the project is alive.
+Put the art below the first screen of the README. Visitors decide in the first few seconds whether the project solves their problem. The description, a screenshot of the product and the install command belong there, and the snake doesn't. A "Project activity" section near Contributing works well, as a sign that the project is alive. One image is enough. A `last commit` and a `release` badge at the top answer "is it maintained?" faster:
 
-## Part 5: README copy that gets read and found
+```md
+[![Last commit](https://img.shields.io/github/last-commit/OWNER/REPO)](https://github.com/OWNER/REPO/commits)
+[![Release](https://img.shields.io/github/v/release/OWNER/REPO)](https://github.com/OWNER/REPO/releases)
+```
+
+## Part 4: README copy that gets read and found
 
 The images bring people in. Whether they star the repo depends on the words around them.
 
@@ -146,7 +164,9 @@ The images bring people in. Whether they star the repo depends on the words arou
 | Heatmap shows only today | Checkout without `fetch-depth: 0` | Add it |
 | Push to `output` fails with 403 | Workflow token is read-only | `permissions: contents: write`, and Settings → Actions → Workflow permissions → Read and write |
 | Scheduled runs stopped | GitHub pauses schedules in public repos after 60 days without activity | Actions tab → the workflow → Enable |
-| Metrics step says skipped | `METRICS_TOKEN` not set or expired | Part 2 |
+| The chart is mostly empty squares | A young repo or org drawn over 53 weeks | `window: auto` and point the README at `activity.svg` |
+| `activity.svg` is a sentence, not a chart | Fewer than `min-days` (10) active days in the window | Expected; it switches to the snake by itself |
+| Profile chart misses your work commits | Private contributions are hidden from strangers, and the action sees what they see | Profile → Contribution settings → Private contributions |
 | Activity list empty | Only public events from the last 90 days count | Expected for a quiet account |
 
 Something else? [Open an issue](https://github.com/HowardZlh/github-action-shares/issues) with the run URL.

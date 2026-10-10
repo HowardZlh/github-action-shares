@@ -37,18 +37,8 @@ Then walk the [3D hall](https://failrouter.com/hall/), where every exhibit hangs
 ## Commit activity
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/snake-dark.svg">
-  <img alt="Snake eating the daily commit grid of all public FailRouter repositories" src="https://raw.githubusercontent.com/FailRouter/.github/output/snake.svg">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/heatmap-dark.svg">
-  <img alt="Heatmap of commits across FailRouter repositories over the last 53 weeks" src="https://raw.githubusercontent.com/FailRouter/.github/output/heatmap.svg">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/skyline-dark.svg">
-  <img alt="Isometric 3D skyline of FailRouter's daily commits" src="https://raw.githubusercontent.com/FailRouter/.github/output/skyline.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FailRouter/.github/output/activity-dark.svg">
+  <img alt="Commits across all public FailRouter repositories since the first one: a snake eating the daily grid, or a one-line summary while there are fewer than 10 active days" src="https://raw.githubusercontent.com/FailRouter/.github/output/activity.svg">
 </picture>
 
 ## Recent activity

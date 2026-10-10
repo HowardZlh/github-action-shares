@@ -1,4 +1,5 @@
-import { escapeXml, fmt, svgDoc, theme } from './theme.js';
+import { period } from '../calendar.js';
+import { escapeXml, fmt, svgDoc, textWidth, theme } from './theme.js';
 
 const CELL = 11;
 const GAP = 3;
@@ -31,10 +32,13 @@ export function walk(from, to) {
  * top-left, always head for the closest uneaten square (ties: leftmost, then
  * topmost), leave through the nearer side. Every step moves exactly one cell,
  * so a step index is also a time slot.
+ * `visibleCols` is how many columns the canvas shows (wider than the grid when a
+ * narrow grid's headline needs the room), so the snake leaves the picture.
  * Returns { points, eatenAt: Map<cell, stepIndex> }.
  */
-export function planRoute(grid) {
+export function planRoute(grid, { visibleCols = grid.weeks.length } = {}) {
   const cols = grid.weeks.length;
+  const offRight = Math.max(cols, visibleCols) + LENGTH + 1;
   const targets = grid.cells.filter((c) => c.count > 0);
   const start = { week: -2, weekday: 0 };
   const points = [start];
@@ -43,7 +47,7 @@ export function planRoute(grid) {
 
   if (targets.length === 0) {
     // nothing to eat: cross the middle row once
-    points.push(...walk(head, { week: -2, weekday: 3 }), ...walk({ week: -2, weekday: 3 }, { week: cols + LENGTH + 1, weekday: 3 }));
+    points.push(...walk(head, { week: -2, weekday: 3 }), ...walk({ week: -2, weekday: 3 }, { week: offRight, weekday: 3 }));
     return { points, eatenAt };
   }
 
@@ -60,7 +64,7 @@ export function planRoute(grid) {
     head = best.c;
   }
 
-  const exit = head.week < cols / 2 ? { week: -LENGTH - 2, weekday: head.weekday } : { week: cols + LENGTH + 1, weekday: head.weekday };
+  const exit = head.week < cols / 2 ? { week: -LENGTH - 2, weekday: head.weekday } : { week: offRight, weekday: head.weekday };
   points.push(...walk(head, exit));
   return { points, eatenAt };
 }
@@ -78,10 +82,11 @@ export function renderSnake(grid, { theme: themeName = 'light', label = 'contrib
   const left = 6;
   const top = 34;
   const cols = grid.weeks.length;
-  const width = left + cols * PITCH + 6;
+  const headline = grid.cropped ? `${fmt(grid.total)} ${label} ${period(grid)}` : `${fmt(grid.total)} ${label}, eaten one square at a time`;
+  const width = Math.max(left + cols * PITCH + 6, left + textWidth(headline, 13) + 6);
   const height = top + 7 * PITCH + 8;
 
-  const route = planRoute(grid);
+  const route = planRoute(grid, { visibleCols: Math.ceil((width - left) / PITCH) });
   const moves = route.points.length - 1;
   const stepS = stepSeconds(moves);
   // rest offscreen: repeat the exit point so the tail follows the head out
@@ -108,7 +113,6 @@ export function renderSnake(grid, { theme: themeName = 'light', label = 'contrib
     return `<rect x="${inset}" y="${inset}" width="${size}" height="${size}" rx="${size / 2.6}" fill="${t.snake}" opacity="${(1 - k * 0.13).toFixed(2)}"><animateMotion values="${values}" dur="${dur}s" begin="${begin}" repeatCount="indefinite" calcMode="linear"/></rect>`;
   }).reverse(); // head drawn last, on top
 
-  const headline = `${fmt(grid.total)} ${label}, eaten one square at a time`;
   return svgDoc({
     width,
     height,

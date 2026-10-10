@@ -1,4 +1,5 @@
-import { escapeXml, fmt, svgDoc, theme } from './theme.js';
+import { MIN_STREAK_TO_SHOW, period } from '../calendar.js';
+import { escapeXml, fmt, svgDoc, textWidth, theme } from './theme.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const CELL = 11;
@@ -13,7 +14,16 @@ export function renderHeatmap(grid, { theme: themeName = 'light', label = 'contr
   const t = theme(themeName);
   const left = 34;
   const top = 58;
-  const width = left + grid.weeks.length * PITCH + 12;
+  const headline = `${fmt(grid.total)} ${label} ${period(grid)}`;
+  const sub = [
+    `${fmt(grid.activeDays)} active days`,
+    grid.longest >= MIN_STREAK_TO_SHOW ? `longest streak ${grid.longest}d` : null,
+    grid.current >= MIN_STREAK_TO_SHOW ? `current streak ${grid.current}d` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  // the legend needs ~200px, the headline its own width; a narrow grid grows to fit both
+  const width = Math.max(left + grid.weeks.length * PITCH + 12, textWidth(headline, 15) + 12, 5 * PITCH + 112);
   const height = top + 7 * PITCH + 34;
 
   const months = [];
@@ -45,15 +55,6 @@ export function renderHeatmap(grid, { theme: themeName = 'light', label = 'contr
     ...t.levels.map((color, i) => `<rect x="${legendX + 28 + i * PITCH}" y="${legendY}" width="${CELL}" height="${CELL}" rx="2" fill="${color}"/>`),
     `<text x="${legendX + 32 + 5 * PITCH}" y="${legendY + 9}" font-size="10" fill="${t.muted}">More</text>`,
   ];
-
-  const headline = `${fmt(grid.total)} ${label} in the last year`;
-  const sub = [
-    `${fmt(grid.activeDays)} active days`,
-    `longest streak ${grid.longest}d`,
-    grid.current > 0 ? `current streak ${grid.current}d` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
 
   return svgDoc({
     width,
