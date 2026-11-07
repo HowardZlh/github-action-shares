@@ -6,7 +6,7 @@ export const DAY_MS = 86_400_000;
 
 export const isoDate = (d) => d.toISOString().slice(0, 10);
 
-const utcMidnight = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+const utcMidnight = (d) => new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12));
 
 /** Count ISO dates ("2026-10-09" or full timestamps) into a Map. */
 export function countDates(dates) {
